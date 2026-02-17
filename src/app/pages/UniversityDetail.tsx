@@ -15,10 +15,43 @@ import {
   FileText,
 } from 'lucide-react';
 import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export function UniversityDetail() {
   const { id } = useParams();
   const [isSaved, setIsSaved] = useState(false);
+
+  const addToWishlist = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Please log in to add to wishlist');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('wishlist')
+        .insert({ 
+          user_id: user.id, 
+          university_id: id 
+        });
+      
+      if (error) {
+        if (error.code === '23505') {
+          alert('Already in wishlist!');
+        } else {
+          console.error('Error adding to wishlist:', error);
+          alert('Error occurred!');
+        }
+      } else {
+        alert('Added to wishlist!');
+        setIsSaved(true);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      alert('Error occurred!');
+    }
+  };
 
   // Mock university data
   const university = {
@@ -94,7 +127,7 @@ export function UniversityDetail() {
                 </div>
               </div>
               <button
-                onClick={() => setIsSaved(!isSaved)}
+                onClick={addToWishlist}
                 className="p-3 bg-white rounded-full shadow-lg hover:scale-110 transition-transform"
               >
                 <Heart
@@ -217,7 +250,10 @@ export function UniversityDetail() {
                 >
                   Start Application
                 </Link>
-                <button className="w-full py-3 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-colors font-medium">
+                <button 
+                  onClick={addToWishlist}
+                  className="w-full py-3 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-colors font-medium"
+                >
                   Save to Wishlist
                 </button>
               </div>

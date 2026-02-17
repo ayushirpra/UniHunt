@@ -131,10 +131,40 @@ export function UniversitySearch() {
     });
   };
 
+  const addToWishlist = async (universityId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Please log in to add to wishlist');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('wishlist')
+        .insert({ 
+          user_id: user.id, 
+          university_id: universityId 
+        });
+      
+      if (error) {
+        if (error.code === '23505') {
+          alert('Already in wishlist!');
+        } else {
+          console.error('Error adding to wishlist:', error);
+          alert('Error occurred!');
+        }
+      } else {
+        alert('Added to wishlist!');
+        setSavedUniversities((prev) => [...prev, universityId]);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      alert('Error occurred!');
+    }
+  };
+
   const toggleSave = (id: string) => {
-    setSavedUniversities((prev) =>
-      prev.includes(id) ? prev.filter((uniId) => uniId !== id) : [...prev, id]
-    );
+    addToWishlist(id);
   };
 
   const clearFilters = () => {

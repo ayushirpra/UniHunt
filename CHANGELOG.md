@@ -52,3 +52,12 @@ All notable changes to UniHunt AI will be documented in this file.
 ### Added
 - Deployed UniHunt AI to Vercel
 - Live at: https://unihunt-ai.vercel.app/
+
+## [0.6.0] - 2026-02-17
+### Added
+- Connected Wishlist page to Supabase
+- Connected Applications page to Supabase  
+- Connected Deadlines page to Supabase
+- Connected Dashboard to show real stats
+- Fixed Add to Wishlist functionality
+- Created wishlist, applications and deadlines tables in Supabase

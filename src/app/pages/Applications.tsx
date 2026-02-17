@@ -1,84 +1,93 @@
-import { FileText, Clock, CheckCircle, XCircle, AlertCircle, Eye } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileText, Clock, CheckCircle, XCircle, AlertCircle, Eye, Loader2, AlertCircle as AlertIcon, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
 export function Applications() {
-  const applications = [
-    {
-      id: '1',
-      university: 'Massachusetts Institute of Technology',
-      program: 'MS Computer Science',
-      status: 'submitted',
-      appliedDate: '2026-01-28',
-      lastUpdate: '2026-02-01',
-      progress: 75,
-      documents: {
-        sop: true,
-        resume: true,
-        transcripts: true,
-        lor: false,
-      },
-    },
-    {
-      id: '2',
-      university: 'Stanford University',
-      program: 'MS Data Science',
-      status: 'in-review',
-      appliedDate: '2026-01-25',
-      lastUpdate: '2026-02-03',
-      progress: 100,
-      documents: {
-        sop: true,
-        resume: true,
-        transcripts: true,
-        lor: true,
-      },
-    },
-    {
-      id: '3',
-      university: 'Harvard University',
-      program: 'MS Business Analytics',
-      status: 'draft',
-      appliedDate: '',
-      lastUpdate: '2026-02-05',
-      progress: 40,
-      documents: {
-        sop: true,
-        resume: false,
-        transcripts: true,
-        lor: false,
-      },
-    },
-    {
-      id: '4',
-      university: 'UC Berkeley',
-      program: 'MS Artificial Intelligence',
-      status: 'accepted',
-      appliedDate: '2026-01-15',
-      lastUpdate: '2026-02-04',
-      progress: 100,
-      documents: {
-        sop: true,
-        resume: true,
-        transcripts: true,
-        lor: true,
-      },
-    },
-    {
-      id: '5',
-      university: 'Carnegie Mellon University',
-      program: 'MS Software Engineering',
-      status: 'waitlisted',
-      appliedDate: '2026-01-20',
-      lastUpdate: '2026-02-02',
-      progress: 100,
-      documents: {
-        sop: true,
-        resume: true,
-        transcripts: true,
-        lor: true,
-      },
-    },
-  ];
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchApplications();
+  }, []);
+
+  const fetchApplications = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError('Please log in to view your applications');
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*, universities(*)')
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      const formattedData = data?.map((item: any) => ({
+        id: item.id,
+        university: item.universities?.name || 'Unknown University',
+        program: item.program || 'N/A',
+        status: item.status || 'draft',
+        appliedDate: item.applied_date,
+        lastUpdate: item.updated_at,
+        progress: item.progress || 0,
+        documents: {
+          sop: item.documents_sop || false,
+          resume: item.documents_resume || false,
+          transcripts: item.documents_transcripts || false,
+          lor: item.documents_lor || false,
+        },
+      })) || [];
+      
+      setApplications(formattedData);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load applications');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateStatus = async (applicationId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({ status: newStatus })
+        .eq('id', applicationId);
+      
+      if (error) throw error;
+      
+      setApplications(prev => 
+        prev.map(app => app.id === applicationId ? { ...app, status: newStatus } : app)
+      );
+    } catch (err: any) {
+      alert('Failed to update status: ' + err.message);
+    }
+  };
+
+  const deleteApplication = async (applicationId: string) => {
+    if (!confirm('Are you sure you want to delete this application?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .delete()
+        .eq('id', applicationId);
+      
+      if (error) throw error;
+      
+      setApplications(prev => prev.filter(app => app.id !== applicationId));
+    } catch (err: any) {
+      alert('Failed to delete application: ' + err.message);
+    }
+  };
 
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
@@ -124,11 +133,44 @@ export function Applications() {
 
   const stats = {
     total: applications.length,
-    submitted: applications.filter((a) => a.status === 'submitted' || a.status === 'in-review')
+    submitted: applications.filter((a) => a.status === 'submitted' || a.status === 'in-review' || a.status === 'Under Review')
       .length,
-    accepted: applications.filter((a) => a.status === 'accepted').length,
-    inProgress: applications.filter((a) => a.status === 'draft').length,
+    accepted: applications.filter((a) => a.status === 'accepted' || a.status === 'Accepted').length,
+    inProgress: applications.filter((a) => a.status === 'draft' || a.status === 'In Progress').length,
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-12 h-12 text-indigo-600 dark:text-indigo-400 animate-spin mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">Loading applications...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-8 text-center">
+            <AlertIcon className="w-12 h-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-red-900 dark:text-red-300 mb-2">Failed to load applications</h3>
+            <p className="text-red-700 dark:text-red-400 mb-4">{error}</p>
+            <button
+              onClick={fetchApplications}
+              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
@@ -259,21 +301,26 @@ export function Applications() {
                   </div>
 
                   <div className="flex flex-col items-end gap-3">
-                    {application.status === 'draft' ? (
-                      <Link
-                        to={`/application/${application.id}`}
-                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-                      >
-                        Continue
-                      </Link>
-                    ) : (
-                      <Link
-                        to={`/application/${application.id}`}
-                        className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
-                      >
-                        View Details
-                      </Link>
-                    )}
+                    <select
+                      value={application.status}
+                      onChange={(e) => updateStatus(application.id, e.target.value)}
+                      className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 outline-none"
+                    >
+                      <option value="Not Started">Not Started</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Submitted">Submitted</option>
+                      <option value="Under Review">Under Review</option>
+                      <option value="Accepted">Accepted</option>
+                      <option value="Rejected">Rejected</option>
+                      <option value="Waitlisted">Waitlisted</option>
+                    </select>
+                    <button
+                      onClick={() => deleteApplication(application.id)}
+                      className="px-4 py-2 border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-medium flex items-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
                     <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
                       {application.appliedDate && (
                         <div>Applied: {new Date(application.appliedDate).toLocaleDateString()}</div>

@@ -51,4 +51,4 @@ All notable changes to UniHunt AI will be documented in this file.
 ## [0.5.0] - 2026-02-17
 ### Added
 - Deployed UniHunt AI to Vercel
-- Live at: https://your-url.vercel.app
+- Live at: https://unihunt-ai.vercel.app/

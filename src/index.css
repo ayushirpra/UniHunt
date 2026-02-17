@@ -13,6 +13,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Import custom animations */
+@import './styles/animations.css';
+
 a {
   font-weight: 500;
   color: #646cff;

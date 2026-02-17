@@ -369,14 +369,29 @@ export function UniversitySearch() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              {filteredUniversities.map((university) => (
-                <UniversityCard
-                  key={university.id}
-                  {...university}
-                  saved={savedUniversities.includes(university.id)}
-                  onToggleSave={toggleSave}
-                />
-              ))}
+              {filteredUniversities.map((university) => {
+                const tuitionDisplay = university.tuition_min && university.tuition_max 
+                  ? `$${university.tuition_min.toLocaleString()} - $${university.tuition_max.toLocaleString()}/year`
+                  : university.tuitionFee || 'Contact for info';
+                
+                return (
+                  <UniversityCard
+                    key={university.id}
+                    id={university.id}
+                    name={university.name}
+                    location={university.city || university.location || 'N/A'}
+                    country={university.country}
+                    ranking={university.ranking || 0}
+                    rating={university.rating || 0}
+                    tuitionFee={tuitionDisplay}
+                    deadline={university.deadline || 'TBD'}
+                    image={university.image_url || university.logo_url || ''}
+                    logo_url={university.logo_url}
+                    saved={savedUniversities.includes(university.id)}
+                    onToggleSave={toggleSave}
+                  />
+                );
+              })}
             </div>
               </>
             )}

@@ -1,5 +1,6 @@
 import { Heart, MapPin, Star, DollarSign, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 
 interface UniversityCardProps {
   id: string;
@@ -11,6 +12,7 @@ interface UniversityCardProps {
   tuitionFee: string;
   deadline: string;
   image: string;
+  logo_url?: string;
   saved?: boolean;
   onToggleSave?: (id: string) => void;
 }
@@ -25,25 +27,44 @@ export function UniversityCard({
   tuitionFee,
   deadline,
   image,
+  logo_url,
   saved = false,
   onToggleSave,
 }: UniversityCardProps) {
+  const [imgError, setImgError] = useState(false);
+  
+  const getPlaceholderImage = () => {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=400&background=4F46E5&color=fff&bold=true`;
+  };
+
+  const displayImage = logo_url || image || getPlaceholderImage();
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300">
-      <div className="relative h-48 overflow-hidden">
-        <img src={image} alt={name} className="w-full h-full object-cover" />
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02] card-hover animate-slide-up">
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 group flex items-center justify-center">
+        <img 
+          src={imgError ? getPlaceholderImage() : displayImage} 
+          alt={`${name} logo`}
+          onError={() => setImgError(true)}
+          loading="lazy"
+          className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-110" 
+        />
         <button
           onClick={(e) => {
             e.preventDefault();
             onToggleSave?.(id);
           }}
-          className="absolute top-3 right-3 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:scale-110 transition-transform"
+          className="absolute top-3 right-3 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md transition-all duration-300 hover:scale-110 active:scale-95 btn-ripple"
         >
           <Heart
-            className={`w-5 h-5 ${saved ? 'fill-red-500 text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
+            className={`w-5 h-5 transition-all duration-300 ${
+              saved 
+                ? 'fill-red-500 text-red-500 animate-heart-beat' 
+                : 'text-gray-600 dark:text-gray-400 hover:text-red-500'
+            }`}
           />
         </button>
-        <div className="absolute top-3 left-3 px-3 py-1 bg-indigo-600 text-white text-xs rounded-full">
+        <div className="absolute top-3 left-3 px-3 py-1 bg-indigo-600 text-white text-xs rounded-full shadow-lg animate-scale-in">
           #{ranking}
         </div>
       </div>

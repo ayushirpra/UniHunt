@@ -197,8 +197,12 @@ export function UniversityDetail() {
       {/* Hero Section */}
       <div className="relative h-80 bg-gradient-to-br from-indigo-600 to-blue-500">
         <img
-          src={university.image_url || 'https://images.unsplash.com/photo-1679653226697-2b0fbf7c17f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwYnVpbGRpbmd8ZW58MXx8fHwxNzcwMjczNjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080'}
+          src={university.banner_url || university.image_url || 'https://images.unsplash.com/photo-1679653226697-2b0fbf7c17f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwYnVpbGRpbmd8ZW58MXx8fHwxNzcwMjczNjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080'}
           alt={university.name}
+          onError={(e) => {
+            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(university.name)}&size=800&background=4F46E5&color=fff&bold=true`;
+          }}
+          loading="lazy"
           className="w-full h-full object-cover mix-blend-overlay opacity-20"
         />
         <div className="absolute inset-0 flex items-end">

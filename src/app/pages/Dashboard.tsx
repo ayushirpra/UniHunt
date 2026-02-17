@@ -126,50 +126,50 @@ export function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 animate-fade-in">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 animate-slide-down">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome back, {userName}!</h1>
           <p className="text-gray-600 dark:text-gray-400">Here's your application progress and recommendations</p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="stagger-item bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 card-hover">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-red-500">
+              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-red-500 transition-transform duration-300 hover:scale-110">
                 <Heart className="w-6 h-6" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stats.wishlist}</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1 animate-count-up">{stats.wishlist}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Universities Saved</div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="stagger-item bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 card-hover">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-blue-500">
+              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-blue-500 transition-transform duration-300 hover:scale-110">
                 <FileText className="w-6 h-6" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stats.applications}</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1 animate-count-up">{stats.applications}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Applications</div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="stagger-item bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 card-hover">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-orange-500">
+              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-orange-500 transition-transform duration-300 hover:scale-110">
                 <Calendar className="w-6 h-6" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stats.deadlines}</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1 animate-count-up">{stats.deadlines}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Upcoming Deadlines</div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="stagger-item bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 card-hover">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-green-500">
+              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-green-500 transition-transform duration-300 hover:scale-110">
                 <CheckCircle className="w-6 h-6" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stats.accepted}</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1 animate-count-up">{stats.accepted}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Accepted</div>
           </div>
         </div>
@@ -178,35 +178,35 @@ export function Dashboard() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Quick Actions */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 animate-slide-up">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Link
                   to="/search"
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-600 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-600 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-300 hover:scale-105 active:scale-95 btn-ripple"
                 >
-                  <BookOpen className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                  <BookOpen className="w-6 h-6 text-indigo-600 dark:text-indigo-400 transition-transform duration-300 hover:rotate-12" />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">Search</span>
                 </Link>
                 <Link
                   to="/ai-recommendations"
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-600 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-600 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-300 hover:scale-105 active:scale-95 btn-ripple"
                 >
-                  <Sparkles className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                  <Sparkles className="w-6 h-6 text-indigo-600 dark:text-indigo-400 transition-transform duration-300 hover:rotate-12" />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">AI Match</span>
                 </Link>
                 <Link
                   to="/ai-sop"
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-600 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-600 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-300 hover:scale-105 active:scale-95 btn-ripple"
                 >
-                  <FileText className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                  <FileText className="w-6 h-6 text-indigo-600 dark:text-indigo-400 transition-transform duration-300 hover:rotate-12" />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">SOP</span>
                 </Link>
                 <Link
                   to="/deadlines"
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-600 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-600 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-300 hover:scale-105 active:scale-95 btn-ripple"
                 >
-                  <Calendar className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                  <Calendar className="w-6 h-6 text-indigo-600 dark:text-indigo-400 transition-transform duration-300 hover:rotate-12" />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">Deadlines</span>
                 </Link>
               </div>
@@ -239,9 +239,9 @@ export function Dashboard() {
                         </div>
                         <div className="text-right">
                           <div
-                            className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-300 ${
                               daysLeft <= 7
-                                ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                                ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 animate-pulse-slow'
                                 : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
                             }`}
                           >
@@ -328,7 +328,7 @@ export function Dashboard() {
                     <span className="font-medium text-gray-900 dark:text-white">80%</span>
                   </div>
                   <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-600 w-4/5" />
+                    <div className="h-full bg-indigo-600 w-4/5 progress-bar" />
                   </div>
                 </div>
                 <div>
@@ -337,7 +337,7 @@ export function Dashboard() {
                     <span className="font-medium text-gray-900 dark:text-white">60%</span>
                   </div>
                   <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 w-3/5" />
+                    <div className="h-full bg-blue-500 w-3/5 progress-bar" />
                   </div>
                 </div>
                 <div>
@@ -346,7 +346,7 @@ export function Dashboard() {
                     <span className="font-medium text-gray-900 dark:text-white">40%</span>
                   </div>
                   <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 w-2/5" />
+                    <div className="h-full bg-green-500 w-2/5 progress-bar" />
                   </div>
                 </div>
               </div>

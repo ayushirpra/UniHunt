@@ -34,19 +34,27 @@ export function Wishlist() {
       
       if (error) throw error;
       
-      const formattedData = data?.map((item: any) => ({
-        wishlistId: item.id,
-        id: item.universities.id,
-        name: item.universities.name,
-        location: item.universities.city,
-        country: item.universities.country,
-        ranking: item.universities.ranking,
-        rating: item.universities.rating,
-        tuitionFee: item.universities.tuition_range,
-        deadline: item.universities.deadline,
-        image: item.universities.image_url || 'https://images.unsplash.com/photo-1679653226697-2b0fbf7c17f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwYnVpbGRpbmd8ZW58MXx8fHwxNzcwMjczNjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080',
-        addedDate: item.created_at,
-      })) || [];
+      const formattedData = data?.map((item: any) => {
+        const uni = item.universities;
+        const tuitionDisplay = uni.tuition_min && uni.tuition_max 
+          ? `$${uni.tuition_min.toLocaleString()} - $${uni.tuition_max.toLocaleString()}/year`
+          : uni.tuition_range || 'Contact for info';
+        
+        return {
+          wishlistId: item.id,
+          id: uni.id,
+          name: uni.name,
+          location: uni.city || 'N/A',
+          country: uni.country,
+          ranking: uni.ranking || 0,
+          rating: uni.rating || 0,
+          tuitionFee: tuitionDisplay,
+          deadline: uni.deadline || 'TBD',
+          image: uni.image_url || uni.logo_url || '',
+          logo_url: uni.logo_url,
+          addedDate: item.created_at,
+        };
+      }) || [];
       
       setSavedUniversities(formattedData);
     } catch (err: any) {
@@ -219,9 +227,13 @@ export function Wishlist() {
                         className="w-5 h-5 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:bg-gray-900"
                       />
                       <img
-                        src={university.image}
+                        src={university.logo_url || university.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(university.name)}&size=200&background=4F46E5&color=fff&bold=true`}
                         alt={university.name}
-                        className="w-24 h-24 rounded-lg object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(university.name)}&size=200&background=4F46E5&color=fff&bold=true`;
+                        }}
+                        loading="lazy"
+                        className="w-24 h-24 rounded-lg object-contain p-2 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20"
                       />
                       <div className="flex-1">
                         <Link

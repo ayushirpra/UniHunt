@@ -68,3 +68,11 @@ All notable changes to UniHunt AI will be documented in this file.
 - User can now view and edit their profile information
 - Profile updates save to database in real-time
 - Added fields: academic level, preferred countries, budget, GPA
+
+## [0.8.0] - 2026-02-17
+### Added
+- Connected University Detail page to Supabase
+- Displays full university information from database
+- Add to Wishlist button on detail page
+- Start Application button functionality
+- Dynamic routing based on university ID

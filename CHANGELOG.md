@@ -47,3 +47,8 @@ All notable changes to UniHunt AI will be documented in this file.
 ### Added
 - Added 50+ universities to Supabase database (60+ total)
 - Universities from USA, UK, Canada, Australia, Asia, and Europe
+
+## [0.5.0] - 2026-02-17
+### Added
+- Deployed UniHunt AI to Vercel
+- Live at: https://your-url.vercel.app

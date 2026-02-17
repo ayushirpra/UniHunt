@@ -61,3 +61,10 @@ All notable changes to UniHunt AI will be documented in this file.
 - Connected Dashboard to show real stats
 - Fixed Add to Wishlist functionality
 - Created wishlist, applications and deadlines tables in Supabase
+
+## [0.7.0] - 2026-02-17
+### Added
+- Connected Profile page to Supabase
+- User can now view and edit their profile information
+- Profile updates save to database in real-time
+- Added fields: academic level, preferred countries, budget, GPA

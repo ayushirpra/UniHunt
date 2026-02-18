@@ -374,6 +374,8 @@ export function UniversitySearch() {
                   ? `$${university.tuition_min.toLocaleString()} - $${university.tuition_max.toLocaleString()}/year`
                   : university.tuitionFee || 'Contact for info';
                 
+                const imageUrl = university.logo_url || university.image_url || university.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(university.name)}&size=400&background=4F46E5&color=fff&bold=true`;
+                
                 return (
                   <UniversityCard
                     key={university.id}
@@ -385,7 +387,7 @@ export function UniversitySearch() {
                     rating={university.rating || 0}
                     tuitionFee={tuitionDisplay}
                     deadline={university.deadline || 'TBD'}
-                    image={university.image_url || university.logo_url || ''}
+                    image={imageUrl}
                     logo_url={university.logo_url}
                     saved={savedUniversities.includes(university.id)}
                     onToggleSave={toggleSave}

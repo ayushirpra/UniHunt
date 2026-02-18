@@ -76,3 +76,27 @@ All notable changes to UniHunt AI will be documented in this file.
 - Add to Wishlist button on detail page
 - Start Application button functionality
 - Dynamic routing based on university ID
+
+## [0.9.0] - 2026-02-17
+### Added
+- Custom animations CSS with fade-in, slide-up, scale, pulse effects
+- Stagger animations for dashboard stat cards
+- Hover effects with scale and shadow elevation on all cards
+- Heart-beat animation for wishlist button
+- Progress bar animations with smooth fill
+- Urgent deadline pulse effect (≤7 days)
+- Button ripple effects on click
+- Icon rotation animations on hover
+- Card entrance animations with slide-up effect
+- Count-up animation for dashboard statistics
+- Smooth image zoom on hover for university cards
+- Lazy loading for all images
+- Reduced motion support for accessibility
+
+### Fixed
+- University images now display properly across all pages
+- Added logo_url support with UI Avatars fallback
+- Implemented proper image error handling with onError
+- Changed from object-cover to object-contain for logos
+- Fixed image display in Search, Wishlist, and Detail pages
+- Added SQL script to update all university logos using Clearbit API

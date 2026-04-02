@@ -1,323 +1,512 @@
-import { Sparkles, TrendingUp, Target, Heart, ArrowRight } from 'lucide-react';
-import { UniversityCard } from '../components/UniversityCard';
-import { useState } from 'react';
+import { Sparkles, Target, Heart, ArrowRight, RefreshCw, MapPin, DollarSign, Star, AlertCircle, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+
+interface University {
+  id: string;
+  name: string;
+  city: string;
+  country: string;
+  world_ranking: number;
+  tuition_min: number;
+  tuition_max: number;
+  currency: string;
+  acceptance_rate: number;
+  logo_url: string;
+}
+
+interface Profile {
+  gpa: number;
+  budget_min: number;
+  budget_max: number;
+  preferred_countries: string | string[];
+  academic_level: string;
+}
+
+interface Match {
+  university: University;
+  score: number;
+  reasons: string[];
+}
+
+const MAX_BUDGET = 200000;
+
+function clampBudget(val: number) {
+  return Math.min(Math.max(Number(val) || 0, 0), MAX_BUDGET);
+}
+
+function runAlgorithm(unis: University[], budgetMin: number, budgetMax: number, gpa: number, preferredCountries: string[]): Match[] {
+  const countries = preferredCountries.map((c) => c.toLowerCase().trim());
+
+  return unis
+    .map((u) => {
+      let score = 10;
+      const reasons: string[] = [];
+
+      const tMin = Number(u.tuition_min) || 0;
+      const tMax = Number(u.tuition_max) || tMin;
+      const ranking = Number(u.world_ranking) || 9999;
+
+      // Budget (30 pts)
+      if (tMin === 0 && tMax === 0) {
+        score += 15;
+        reasons.push('💰 Tuition info not available — contact university for details');
+      } else if (tMin <= budgetMax && (tMax === 0 || tMax >= budgetMin)) {
+        score += 30;
+        reasons.push(`💰 Budget Fit: Tuition $${(tMin / 1000).toFixed(0)}k–$${(tMax / 1000).toFixed(0)}k fits your $${(budgetMin / 1000).toFixed(0)}k–$${(budgetMax / 1000).toFixed(0)}k range`);
+      } else if (tMin <= budgetMax * 1.3) {
+        score += 10;
+        reasons.push(`💰 Near Budget: Tuition $${(tMin / 1000).toFixed(0)}k–$${(tMax / 1000).toFixed(0)}k is close to your range`);
+      }
+
+      // Country (25 pts)
+      if (countries.length > 0 && countries.includes((u.country || '').toLowerCase())) {
+        score += 25;
+        reasons.push(`📍 Location Match: Located in ${u.country}, one of your preferred countries`);
+      }
+
+      // GPA (25 pts) — 0–10 scale
+      if (gpa > 0) {
+        const reqGPA = ranking <= 20 ? 9.2 : ranking <= 50 ? 8.75 : 8.0;
+        if (gpa >= reqGPA) {
+          score += 25;
+          reasons.push(`🎓 Academic Match: Your ${gpa} GPA ${gpa > reqGPA ? 'exceeds' : 'meets'} the ~${reqGPA} requirement`);
+        } else if (gpa >= reqGPA - 1) {
+          score += 10;
+          reasons.push(`🎓 Academic Potential: Your ${gpa} GPA is close to the ~${reqGPA} requirement`);
+        }
+      }
+
+      // Ranking bonus (20 pts)
+      if (ranking <= 10) { score += 20; reasons.push(`⭐ Elite Institution: Ranked #${ranking} globally`); }
+      else if (ranking <= 30) { score += 15; reasons.push(`⭐ Top-Tier University: Ranked #${ranking} globally`); }
+      else if (ranking <= 50) { score += 10; reasons.push(`⭐ Highly Ranked: #${ranking} globally`); }
+
+      if (reasons.length === 0) reasons.push('🎓 Matches your general academic profile');
+
+      score += Math.floor(Math.random() * 11) - 5;
+      return { university: u, score: Math.min(100, Math.max(5, score)), reasons };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+}
+
+function ScoreCircle({ score }: { score: number }) {
+  const r = 34;
+  const circ = 2 * Math.PI * r;
+  const color = score >= 80 ? '#22c55e' : score >= 60 ? '#eab308' : '#f97316';
+  return (
+    <div className="relative w-20 h-20 shrink-0">
+      <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r={r} stroke="currentColor" strokeWidth="6" fill="none" className="text-gray-200 dark:text-gray-700" />
+        <circle cx="40" cy="40" r={r} stroke={color} strokeWidth="6" fill="none"
+          strokeDasharray={circ} strokeDashoffset={circ * (1 - score / 100)} strokeLinecap="round" />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-base font-bold" style={{ color }}>{score}%</span>
+        <span className="text-[10px] text-gray-500 dark:text-gray-400">Match</span>
+      </div>
+    </div>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+      <div className="flex gap-5">
+        <div className="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0" />
+        <div className="flex-1 space-y-3">
+          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
+          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
+          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function AIRecommendations() {
-  const [savedUniversities, setSavedUniversities] = useState<string[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [generated, setGenerated] = useState(false);
+  const [allCountries, setAllCountries] = useState<string[]>([]);
 
-  const userProfile = {
-    field: 'Computer Science',
-    gpa: '3.8',
-    budget: '$40,000 - $60,000',
-    countries: ['USA', 'UK', 'Canada'],
+  // Filters — use refs so handleGenerate always reads latest values
+  const [filterCountry, setFilterCountry] = useState('');
+  const [filterLevel, setFilterLevel] = useState('');
+  const [sliderBudgetMin, setSliderBudgetMin] = useState(0);
+  const [sliderBudgetMax, setSliderBudgetMax] = useState(50000);
+
+  // Store universities in a ref to avoid stale closure in handleGenerate
+  const unisRef = useRef<University[]>([]);
+  const userRef = useRef<{ id: string } | null>(null);
+  const filterCountryRef = useRef('');
+  const sliderBudgetMinRef = useRef(0);
+  const sliderBudgetMaxRef = useRef(50000);
+
+  // Keep refs in sync
+  filterCountryRef.current = filterCountry;
+  sliderBudgetMinRef.current = sliderBudgetMin;
+  sliderBudgetMaxRef.current = sliderBudgetMax;
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      userRef.current = user;
+
+      const [profileRes, unisRes, wlRes] = await Promise.all([
+        user ? supabase.from('profiles').select('*').eq('id', user.id).single() : Promise.resolve({ data: null }),
+        supabase.from('universities').select('*'),
+        user ? supabase.from('wishlist').select('university_id').eq('user_id', user.id) : Promise.resolve({ data: [] }),
+      ]);
+
+      if (profileRes.data) {
+        setProfile(profileRes.data);
+        const pMin = clampBudget(profileRes.data.budget_min);
+        const pMax = clampBudget(profileRes.data.budget_max) || 50000;
+        setSliderBudgetMin(pMin);
+        setSliderBudgetMax(pMax);
+        sliderBudgetMinRef.current = pMin;
+        sliderBudgetMaxRef.current = pMax;
+      }
+
+      if (unisRes.data && unisRes.data.length > 0) {
+        const normalised: University[] = unisRes.data.map((u: any) => ({
+          ...u,
+          world_ranking: Number(u.world_ranking ?? u.ranking) || 9999,
+          tuition_min: Number(u.tuition_min) || 0,
+          tuition_max: Number(u.tuition_max) || 0,
+        }));
+        unisRef.current = normalised;
+        setAllCountries([...new Set(normalised.map((u) => u.country).filter(Boolean))].sort() as string[]);
+      }
+
+      if (wlRes.data) setWishlist((wlRes.data as any[]).map((w) => w.university_id));
+      setPageLoading(false);
+    })();
+  }, []);
+
+  const missingFields = profile
+    ? [
+        !profile.gpa && 'GPA',
+        (!profile.budget_min && !profile.budget_max) && 'Budget Range',
+        !profile.preferred_countries && 'Preferred Countries',
+      ].filter(Boolean)
+    : [];
+
+  const handleGenerate = async () => {
+    if (!profile) return;
+    setAnalyzing(true);
+    setGenerated(false);
+    await new Promise((r) => setTimeout(r, 2000));
+
+    const preferredCountries: string[] = profile.preferred_countries
+      ? (Array.isArray(profile.preferred_countries)
+          ? profile.preferred_countries
+          : (profile.preferred_countries as string).split(',').map((c) => c.trim()))
+      : [];
+
+    let unis = unisRef.current;
+    const country = filterCountryRef.current;
+    if (country) unis = unis.filter((u) => u.country === country);
+
+    const bMin = sliderBudgetMinRef.current;
+    const bMax = sliderBudgetMaxRef.current;
+    const gpa = Number(profile.gpa) || 0;
+
+    console.log('[AI Recs] unis:', unis.length, 'budgetMin:', bMin, 'budgetMax:', bMax, 'gpa:', gpa, 'countries:', preferredCountries);
+
+    const results = runAlgorithm(unis, bMin, bMax, gpa, preferredCountries);
+    console.log('[AI Recs] matches:', results.length, results.map(m => ({ name: m.university.name, score: m.score })));
+
+    setMatches(results);
+    setAnalyzing(false);
+    setGenerated(true);
   };
 
-  const recommendations = [
-    {
-      id: '1',
-      name: 'Carnegie Mellon University',
-      location: 'Pittsburgh',
-      country: 'USA',
-      ranking: 5,
-      rating: 4.7,
-      tuitionFee: '$58,924/year',
-      deadline: 'Feb 15, 2026',
-      matchScore: 92,
-      reasons: [
-        'Strong Computer Science program',
-        'Matches your GPA requirements',
-        'Active research opportunities',
-      ],
-      image: 'https://images.unsplash.com/photo-1679653226697-2b0fbf7c17f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwYnVpbGRpbmd8ZW58MXx8fHwxNzcwMjczNjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    },
-    {
-      id: '2',
-      name: 'ETH Zurich',
-      location: 'Zurich',
-      country: 'Switzerland',
-      ranking: 7,
-      rating: 4.7,
-      tuitionFee: 'CHF 1,460/year',
-      deadline: 'Apr 30, 2026',
-      matchScore: 88,
-      reasons: [
-        'Low tuition fees',
-        'World-class CS department',
-        'English-taught programs',
-      ],
-      image: 'https://images.unsplash.com/photo-1679653226697-2b0fbf7c17f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwYnVpbGRpbmd8ZW58MXx8fHwxNzcwMjczNjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    },
-    {
-      id: '3',
-      name: 'University of Toronto',
-      location: 'Toronto',
-      country: 'Canada',
-      ranking: 18,
-      rating: 4.6,
-      tuitionFee: 'CAD 58,160/year',
-      deadline: 'Feb 1, 2026',
-      matchScore: 85,
-      reasons: [
-        'Within budget range',
-        'Strong AI and ML focus',
-        'Good scholarship opportunities',
-      ],
-      image: 'https://images.unsplash.com/photo-1679653226697-2b0fbf7c17f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwYnVpbGRpbmd8ZW58MXx8fHwxNzcwMjczNjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    },
-    {
-      id: '4',
-      name: 'Imperial College London',
-      location: 'London',
-      country: 'UK',
-      ranking: 6,
-      rating: 4.6,
-      tuitionFee: '£37,900/year',
-      deadline: 'Mar 31, 2026',
-      matchScore: 84,
-      reasons: [
-        'Top UK university',
-        'Industry connections',
-        'One-year master\'s program',
-      ],
-      image: 'https://images.unsplash.com/photo-1679653226697-2b0fbf7c17f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwYnVpbGRpbmd8ZW58MXx8fHwxNzcwMjczNjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    },
-    {
-      id: '5',
-      name: 'University of Waterloo',
-      location: 'Waterloo',
-      country: 'Canada',
-      ranking: 25,
-      rating: 4.5,
-      tuitionFee: 'CAD 48,000/year',
-      deadline: 'Feb 15, 2026',
-      matchScore: 82,
-      reasons: [
-        'Affordable option',
-        'Co-op opportunities',
-        'Strong tech ecosystem',
-      ],
-      image: 'https://images.unsplash.com/photo-1679653226697-2b0fbf7c17f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwYnVpbGRpbmd8ZW58MXx8fHwxNzcwMjczNjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    },
-    {
-      id: '6',
-      name: 'TU Munich',
-      location: 'Munich',
-      country: 'Germany',
-      ranking: 30,
-      rating: 4.5,
-      tuitionFee: '€3,000/year',
-      deadline: 'May 31, 2026',
-      matchScore: 80,
-      reasons: [
-        'Extremely affordable',
-        'Quality education',
-        'Growing tech hub',
-      ],
-      image: 'https://images.unsplash.com/photo-1679653226697-2b0fbf7c17f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwYnVpbGRpbmd8ZW58MXx8fHwxNzcwMjczNjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    },
-  ];
-
-  const toggleSave = (id: string) => {
-    setSavedUniversities((prev) =>
-      prev.includes(id) ? prev.filter((uniId) => uniId !== id) : [...prev, id]
-    );
+  const toggleWishlist = async (uniId: string) => {
+    const user = userRef.current;
+    if (!user) return;
+    setTogglingId(uniId);
+    if (wishlist.includes(uniId)) {
+      await supabase.from('wishlist').delete().eq('user_id', user.id).eq('university_id', uniId);
+      setWishlist((p) => p.filter((id) => id !== uniId));
+    } else {
+      await supabase.from('wishlist').insert({ user_id: user.id, university_id: uniId });
+      setWishlist((p) => [...p, uniId]);
+    }
+    setTogglingId(null);
   };
+
+  const avgScore = matches.length ? Math.round(matches.reduce((s, m) => s + m.score, 0) / matches.length) : 0;
+  const strongMatches = matches.filter((m) => m.score >= 60).length;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-medium mb-4">
             <Sparkles className="w-4 h-4" />
             AI-Powered Recommendations
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Your Perfect Matches</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Based on your profile, we've found {recommendations.length} universities that match
-            your goals
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Find Your Perfect University</h1>
+          <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
+            Our AI analyzes 60+ universities against your profile to surface your best-fit matches.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Profile Summary */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 sticky top-24">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Your Profile</h2>
-              <div className="space-y-3">
-                <div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Field of Study</div>
-                  <div className="font-medium text-gray-900 dark:text-white">{userProfile.field}</div>
-                </div>
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">GPA</div>
-                  <div className="font-medium text-gray-900 dark:text-white">{userProfile.gpa}</div>
-                </div>
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Budget</div>
-                  <div className="font-medium text-gray-900 dark:text-white">{userProfile.budget}</div>
-                </div>
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Preferred Countries</div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {userProfile.countries.map((country) => (
-                      <span
-                        key={country}
-                        className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm"
-                      >
-                        {country}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <button className="w-full mt-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium">
-                Edit Profile
-              </button>
-            </div>
-
-            {/* Match Info */}
-            <div className="bg-gradient-to-br from-indigo-600 to-blue-500 rounded-xl p-6 text-white">
-              <div className="flex items-center gap-2 mb-3">
-                <Target className="w-5 h-5" />
-                <h3 className="font-semibold">How Matching Works</h3>
-              </div>
-              <p className="text-sm text-indigo-100 mb-4">
-                Our AI analyzes 50+ factors including your academic background, preferences,
-                budget, and career goals to find the best universities for you.
+        {/* Profile incomplete banner */}
+        {!pageLoading && profile && missingFields.length > 0 && (
+          <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-5 flex items-start gap-4">
+            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-semibold text-amber-800 dark:text-amber-300 mb-1">
+                Complete your profile to get AI-powered recommendations!
               </p>
-              <div className="flex items-center gap-2 text-sm">
-                <TrendingUp className="w-4 h-4" />
-                <span>Match scores updated daily</span>
+              <p className="text-sm text-amber-700 dark:text-amber-400 mb-3">
+                Missing: {(missingFields as string[]).join(', ')}
+              </p>
+              <Link to="/profile" className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 dark:text-amber-300 hover:underline">
+                Go to Profile <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Filters */}
+        {!pageLoading && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 mb-6">
+            <div className="grid sm:grid-cols-3 gap-4">
+              {/* Country filter */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Country</label>
+                <div className="relative">
+                  <select
+                    value={filterCountry}
+                    onChange={(e) => setFilterCountry(e.target.value)}
+                    className="w-full appearance-none bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white pr-8 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">All Countries</option>
+                    {allCountries.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-2 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Academic level */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Academic Level</label>
+                <div className="relative">
+                  <select
+                    value={filterLevel}
+                    onChange={(e) => setFilterLevel(e.target.value)}
+                    className="w-full appearance-none bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white pr-8 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">All Levels</option>
+                    <option value="undergraduate">Undergraduate</option>
+                    <option value="masters">Master's</option>
+                    <option value="phd">PhD</option>
+                  </select>
+                  <ChevronDown className="absolute right-2 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Budget slider */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                  Max Budget: <span className="text-indigo-600 dark:text-indigo-400">${sliderBudgetMax.toLocaleString()}</span>
+                </label>
+                <input
+                  type="range" min={0} max={MAX_BUDGET} step={1000}
+                  value={sliderBudgetMax}
+                  onChange={(e) => setSliderBudgetMax(Number(e.target.value))}
+                  className="w-full accent-indigo-600"
+                />
+                <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                  <span>$0</span><span>${(MAX_BUDGET / 1000).toFixed(0)}k</span>
+                </div>
               </div>
             </div>
           </div>
+        )}
 
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {recommendations.map((university) => (
-              <div key={university.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="flex items-start gap-6 p-6">
-                  {/* Match Score */}
-                  <div className="flex-shrink-0 text-center">
-                    <div className="relative w-20 h-20">
-                      <svg className="w-20 h-20 transform -rotate-90">
-                        <circle
-                          cx="40"
-                          cy="40"
-                          r="34"
-                          stroke="currentColor"
-                          strokeWidth="6"
-                          fill="none"
-                          className="text-gray-200 dark:text-gray-700"
-                        />
-                        <circle
-                          cx="40"
-                          cy="40"
-                          r="34"
-                          stroke="currentColor"
-                          strokeWidth="6"
-                          fill="none"
-                          strokeDasharray={`${2 * Math.PI * 34}`}
-                          strokeDashoffset={`${2 * Math.PI * 34 * (1 - university.matchScore / 100)}`}
-                          className="text-indigo-600 dark:text-indigo-500"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xl font-bold text-gray-900 dark:text-white">
-                          {university.matchScore}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-2">Match</div>
-                  </div>
+        {/* Generate button */}
+        {!pageLoading && (
+          <div className="flex justify-center mb-8">
+            <button
+              onClick={handleGenerate}
+              disabled={analyzing || !profile}
+              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 disabled:opacity-60 text-white rounded-xl font-semibold text-lg shadow-lg shadow-indigo-200 dark:shadow-indigo-900/40 transition-all"
+            >
+              {analyzing ? (
+                <>
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  Analyzing {unisRef.current.length}+ universities...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  {generated ? 'Regenerate Recommendations' : 'Generate Recommendations'}
+                </>
+              )}
+            </button>
+          </div>
+        )}
 
-                  {/* University Info */}
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                          {university.name}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {university.location}, {university.country}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => toggleSave(university.id)}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                      >
-                        <Heart
-                          className={`w-6 h-6 ${
-                            savedUniversities.includes(university.id)
-                              ? 'fill-red-500 text-red-500'
-                              : 'text-gray-400 dark:text-gray-500'
-                          }`}
-                        />
-                      </button>
-                    </div>
+        {/* Analyzing message */}
+        {analyzing && (
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400 -mt-4 mb-6 animate-pulse">
+            Analyzing universities to find your perfect matches...
+          </p>
+        )}
 
-                    <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-                      <div>
-                        <div className="text-gray-600 dark:text-gray-400">Ranking</div>
-                        <div className="font-medium text-gray-900 dark:text-white">#{university.ranking}</div>
-                      </div>
-                      <div>
-                        <div className="text-gray-600 dark:text-gray-400">Rating</div>
-                        <div className="font-medium text-gray-900 dark:text-white">{university.rating}</div>
-                      </div>
-                      <div>
-                        <div className="text-gray-600 dark:text-gray-400">Tuition</div>
-                        <div className="font-medium text-gray-900 dark:text-white">{university.tuitionFee}</div>
-                      </div>
-                    </div>
+        {/* Skeletons while analyzing */}
+        {analyzing && (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        )}
 
-                    {/* Match Reasons */}
-                    <div className="mb-4">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">Why this match:</div>
-                      <div className="space-y-1">
-                        {university.reasons.map((reason, index) => (
-                          <div key={index} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-500 mt-1.5 flex-shrink-0" />
-                            <span>{reason}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
-                        View Details
-                      </button>
-                      <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium">
-                        Compare
-                      </button>
-                      <div className="ml-auto text-sm text-gray-600 dark:text-gray-400">
-                        Deadline: {university.deadline}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        {/* Stats summary */}
+        {generated && !analyzing && matches.length > 0 && (
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            {[
+              { icon: <Target className="w-5 h-5 text-indigo-500" />, label: 'Universities Analyzed', value: `${unisRef.current.length}+` },
+              { icon: <Star className="w-5 h-5 text-green-500" />, label: 'Strong Matches', value: strongMatches },
+              { icon: <Sparkles className="w-5 h-5 text-blue-500" />, label: 'Avg Match Score', value: `${avgScore}%` },
+            ].map(({ icon, label, value }) => (
+              <div key={label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
+                <div className="flex justify-center mb-2">{icon}</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">{value}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</div>
               </div>
             ))}
-
-            {/* CTA */}
-            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-xl p-8 text-center border border-indigo-100 dark:border-indigo-800">
-              <Sparkles className="w-12 h-12 text-indigo-600 dark:text-indigo-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Want More Personalized Recommendations?
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Update your profile with more details to get even better matches
-              </p>
-              <button className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
-                Update Profile
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
           </div>
-        </div>
+        )}
+
+        {/* Match cards */}
+        {generated && !analyzing && (
+          <div className="space-y-4">
+            {matches.length === 0 ? (
+              <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                <Target className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">No matches found</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500">Try adjusting your budget or country preferences</p>
+              </div>
+            ) : (
+              matches.map((match, idx) => (
+                <div
+                  key={match.university.id}
+                  className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300"
+                  style={{ animationDelay: `${idx * 80}ms` }}
+                >
+                  <div className="flex items-start gap-5 p-6">
+                    <ScoreCircle score={match.score} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-1">
+                        <div>
+                          {match.university.logo_url && (
+                            <img src={match.university.logo_url} alt="" className="w-8 h-8 rounded object-contain mb-1" />
+                          )}
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white leading-tight">
+                            {match.university.name}
+                          </h3>
+                          <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                            <MapPin className="w-3.5 h-3.5" />
+                            {match.university.city}, {match.university.country}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => toggleWishlist(match.university.id)}
+                          disabled={togglingId === match.university.id}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ml-2 shrink-0"
+                        >
+                          <Heart className={`w-5 h-5 transition-colors ${wishlist.includes(match.university.id) ? 'fill-red-500 text-red-500' : 'text-gray-400 dark:text-gray-500'}`} />
+                        </button>
+                      </div>
+
+                      <div className="flex flex-wrap gap-4 my-3 text-sm text-gray-600 dark:text-gray-400">
+                        {match.university.world_ranking < 9999 && (
+                          <span className="flex items-center gap-1">
+                            <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                            Rank #{match.university.world_ranking}
+                          </span>
+                        )}
+                        {(match.university.tuition_min > 0 || match.university.tuition_max > 0) && (
+                          <span className="flex items-center gap-1">
+                            <DollarSign className="w-3.5 h-3.5" />
+                            ${((match.university.tuition_min || match.university.tuition_max) / 1000).toFixed(0)}k/yr
+                          </span>
+                        )}
+                        {match.university.acceptance_rate > 0 && (
+                          <span>{match.university.acceptance_rate}% acceptance</span>
+                        )}
+                      </div>
+
+                      <div className="mb-4">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Why this match?</p>
+                        <div className="space-y-1">
+                          {match.reasons.map((r, i) => (
+                            <p key={i} className="text-sm text-gray-600 dark:text-gray-400">{r}</p>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <Link
+                          to={`/university/${match.university.id}`}
+                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+                        >
+                          View Details
+                        </Link>
+                        <button
+                          onClick={() => toggleWishlist(match.university.id)}
+                          disabled={togglingId === match.university.id}
+                          className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          {wishlist.includes(match.university.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+
+            {matches.length > 0 && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={handleGenerate}
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Regenerate Recommendations
+                </button>
+              </div>
+            )}
+
+            <p className="text-xs text-center text-gray-400 dark:text-gray-500 pt-4 pb-2 max-w-2xl mx-auto">
+              These recommendations are generated based on your profile data. Always verify requirements, deadlines, and program details on official university websites before applying.
+            </p>
+          </div>
+        )}
+
+        {pageLoading && (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        )}
       </div>
     </div>
   );

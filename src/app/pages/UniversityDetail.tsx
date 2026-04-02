@@ -123,10 +123,10 @@ export function UniversityDetail() {
     }
   };
 
-  const formatTuition = (min: number, max: number) => {
+  const formatTuition = (min: number, max: number, currency: string = 'USD') => {
     if (!min && !max) return 'Contact university';
-    if (min === max) return `$${min.toLocaleString()}/year`;
-    return `$${min.toLocaleString()} - $${max.toLocaleString()}/year`;
+    if (min === max) return `${min.toLocaleString()} ${currency}/year`;
+    return `${min.toLocaleString()} - ${max.toLocaleString()} ${currency}/year`;
   };
 
   const formatStudentCount = (count: number) => {
@@ -197,7 +197,7 @@ export function UniversityDetail() {
       {/* Hero Section */}
       <div className="relative h-80 bg-gradient-to-br from-indigo-600 to-blue-500">
         <img
-          src={university.banner_url || university.image_url || 'https://images.unsplash.com/photo-1679653226697-2b0fbf7c17f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwYnVpbGRpbmd8ZW58MXx8fHwxNzcwMjczNjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080'}
+          src={university.logo_url || university.image_url || 'https://images.unsplash.com/photo-1679653226697-2b0fbf7c17f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwYnVpbGRpbmd8ZW58MXx8fHwxNzcwMjczNjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080'}
           alt={university.name}
           onError={(e) => {
             e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(university.name)}&size=800&background=4F46E5&color=fff&bold=true`;
@@ -209,10 +209,10 @@ export function UniversityDetail() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
             <div className="flex items-start justify-between">
               <div>
-                {university.ranking && (
+                {university.world_ranking && (
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm mb-3">
                     <Award className="w-4 h-4" />
-                    World Ranking #{university.ranking}
+                    World Ranking #{university.world_ranking}
                   </div>
                 )}
                 <h1 className="text-4xl font-bold text-white mb-2">{university.name}</h1>
@@ -221,10 +221,10 @@ export function UniversityDetail() {
                     <MapPin className="w-4 h-4" />
                     <span>{university.city}, {university.country}</span>
                   </div>
-                  {university.rating && (
+                  {university.world_ranking && (
                     <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-300 text-yellow-300" />
-                      <span>{university.rating}/5</span>
+                      <Award className="w-4 h-4 text-yellow-300" />
+                      <span>World Rank #{university.world_ranking}</span>
                     </div>
                   )}
                 </div>
@@ -259,25 +259,25 @@ export function UniversityDetail() {
                     <div className="text-sm text-gray-600 dark:text-gray-400">Acceptance Rate</div>
                   </div>
                 )}
-                {university.student_count && (
+                {university.student_population && (
                   <div>
                     <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                      {formatStudentCount(university.student_count)}
+                      {formatStudentCount(university.student_population)}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">Total Students</div>
                   </div>
                 )}
-                {university.international_students && (
+                {university.international_students_percentage && (
                   <div>
                     <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                      {university.international_students}%
+                      {university.international_students_percentage}%
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">International</div>
                   </div>
                 )}
                 <div>
                   <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                    {formatTuition(university.tuition_min, university.tuition_max)}
+                    {formatTuition(university.tuition_min, university.tuition_max, university.currency)}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Tuition</div>
                 </div>

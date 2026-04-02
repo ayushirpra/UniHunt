@@ -1,89 +1,129 @@
-import { X, Check, Minus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { X, Trophy, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useCompare } from '../context/CompareContext';
+
+// Highlight the best (lowest/highest) value in a row
+function getBestIndex(values: (number | null)[], mode: 'min' | 'max'): number {
+  const valid = values.map((v, i) => ({ v, i })).filter((x) => x.v !== null) as { v: number; i: number }[];
+  if (valid.length === 0) return -1;
+  return mode === 'min'
+    ? valid.reduce((a, b) => (a.v < b.v ? a : b)).i
+    : valid.reduce((a, b) => (a.v > b.v ? a : b)).i;
+}
+
+interface Row {
+  label: string;
+  getValue: (uni: any) => string;
+  getNumeric?: (uni: any) => number | null;
+  bestMode?: 'min' | 'max';
+}
+
+const ROWS: Row[] = [
+  { label: 'Country', getValue: (u) => u.country || 'N/A' },
+  {
+    label: 'World Ranking',
+    getValue: (u) => u.ranking ? `#${u.ranking}` : 'N/A',
+    getNumeric: (u) => u.ranking ?? null,
+    bestMode: 'min',
+  },
+  {
+    label: 'Tuition (USD/yr)',
+    getValue: (u) => u.tuition_min ? `$${Number(u.tuition_min).toLocaleString()}` : (u.tuitionFee || 'N/A'),
+    getNumeric: (u) => u.tuition_min ?? null,
+    bestMode: 'min',
+  },
+  {
+    label: 'Living Cost (USD/yr)',
+    getValue: (u) => u.living_cost ? `$${Number(u.living_cost).toLocaleString()}` : 'N/A',
+    getNumeric: (u) => u.living_cost ?? null,
+    bestMode: 'min',
+  },
+  {
+    label: 'Acceptance Rate',
+    getValue: (u) => u.acceptance_rate != null ? `${u.acceptance_rate}%` : 'N/A',
+    getNumeric: (u) => u.acceptance_rate ?? null,
+    bestMode: 'max',
+  },
+  {
+    label: 'GPA Requirement',
+    getValue: (u) => u.gpa_requirement != null ? `${u.gpa_requirement}/4.0` : 'N/A',
+    getNumeric: (u) => u.gpa_requirement ?? null,
+    bestMode: 'min',
+  },
+  {
+    label: 'IELTS Requirement',
+    getValue: (u) => u.ielts_requirement != null ? `${u.ielts_requirement}` : 'N/A',
+    getNumeric: (u) => u.ielts_requirement ?? null,
+    bestMode: 'min',
+  },
+  {
+    label: 'TOEFL Requirement',
+    getValue: (u) => u.toefl_requirement != null ? `${u.toefl_requirement}` : 'N/A',
+    getNumeric: (u) => u.toefl_requirement ?? null,
+    bestMode: 'min',
+  },
+  { label: 'Course Duration', getValue: (u) => u.course_duration || 'N/A' },
+  {
+    label: 'Scholarships',
+    getValue: (u) => u.scholarships === true ? '✅ Available' : u.scholarships === false ? '❌ No' : 'N/A',
+  },
+  { label: 'Application Deadline', getValue: (u) => u.deadline || 'N/A' },
+];
 
 export function UniversityComparison() {
-  // Mock data for comparison
-  const universities = [
-    {
-      id: '1',
-      name: 'MIT',
-      location: 'Cambridge, USA',
-      ranking: 1,
-      rating: 4.8,
-      tuition: '$53,790/year',
-      acceptanceRate: '7%',
-      studentCount: '11,520',
-      international: '33%',
-      duration: '2 years',
-      deadline: 'Feb 15, 2026',
-      employmentRate: '95%',
-      avgSalary: '$120,000',
-      research: 'Excellent',
-      housing: 'Available',
-      scholarships: 'Yes',
-    },
-    {
-      id: '2',
-      name: 'Stanford',
-      location: 'Stanford, USA',
-      ranking: 2,
-      rating: 4.9,
-      tuition: '$56,169/year',
-      acceptanceRate: '5%',
-      studentCount: '17,249',
-      international: '23%',
-      duration: '2 years',
-      deadline: 'Feb 20, 2026',
-      employmentRate: '96%',
-      avgSalary: '$125,000',
-      research: 'Excellent',
-      housing: 'Available',
-      scholarships: 'Yes',
-    },
-    {
-      id: '3',
-      name: 'Harvard',
-      location: 'Cambridge, USA',
-      ranking: 3,
-      rating: 4.7,
-      tuition: '$51,904/year',
-      acceptanceRate: '6%',
-      studentCount: '31,566',
-      international: '25%',
-      duration: '2 years',
-      deadline: 'Mar 1, 2026',
-      employmentRate: '94%',
-      avgSalary: '$118,000',
-      research: 'Excellent',
-      housing: 'Limited',
-      scholarships: 'Yes',
-    },
-  ];
+  const { compareList, removeFromCompare, clearCompare } = useCompare();
+  const navigate = useNavigate();
 
-  const comparisonRows = [
-    { label: 'World Ranking', key: 'ranking', format: (val: any) => `#${val}` },
-    { label: 'Rating', key: 'rating', format: (val: any) => `${val}/5.0` },
-    { label: 'Location', key: 'location' },
-    { label: 'Annual Tuition', key: 'tuition' },
-    { label: 'Acceptance Rate', key: 'acceptanceRate' },
-    { label: 'Total Students', key: 'studentCount' },
-    { label: 'International Students', key: 'international' },
-    { label: 'Program Duration', key: 'duration' },
-    { label: 'Application Deadline', key: 'deadline' },
-    { label: 'Employment Rate', key: 'employmentRate' },
-    { label: 'Average Starting Salary', key: 'avgSalary' },
-    { label: 'Research Opportunities', key: 'research' },
-    { label: 'On-Campus Housing', key: 'housing' },
-    { label: 'Scholarships Available', key: 'scholarships' },
-  ];
+  if (compareList.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🔍</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No universities selected</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Go to Search and click "Compare" on universities you want to compare.
+          </p>
+          <Link
+            to="/search"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Browse Universities
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">University Comparison</h1>
-          <p className="text-gray-600 dark:text-gray-400">Compare universities side by side to make an informed decision</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">University Comparison</h1>
+            <p className="text-gray-600 dark:text-gray-400">Side-by-side comparison of {compareList.length} universities</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate('/search')}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm"
+            >
+              + Add More
+            </button>
+            <button
+              onClick={clearCompare}
+              className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm"
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
+
+        {/* Best value legend */}
+        <div className="flex items-center gap-2 mb-4 text-sm text-gray-600 dark:text-gray-400">
+          <Trophy className="w-4 h-4 text-yellow-500" />
+          <span>Gold highlight = best value in that category</span>
         </div>
 
         {/* Comparison Table */}
@@ -91,107 +131,96 @@ export function UniversityComparison() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20">
-                  <th className="text-left p-6 font-semibold text-gray-900 dark:text-white min-w-[200px] sticky left-0 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20">
+                <tr className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20">
+                  {/* Criteria column */}
+                  <th className="text-left p-5 font-semibold text-gray-700 dark:text-gray-300 min-w-[180px] sticky left-0 bg-indigo-50 dark:bg-indigo-900/20 z-10">
                     Criteria
                   </th>
-                  {universities.map((uni) => (
-                    <th key={uni.id} className="p-6 min-w-[250px]">
-                      <div className="text-left">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{uni.name}</h3>
-                          <button className="p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-colors">
-                            <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                          </button>
+                  {compareList.map((uni) => (
+                    <th key={uni.id} className="p-5 min-w-[220px] text-left">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          {uni.logo_url && (
+                            <img
+                              src={uni.logo_url}
+                              alt={uni.name}
+                              className="w-10 h-10 object-contain rounded mb-2"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          )}
+                          <div className="font-semibold text-gray-900 dark:text-white text-base leading-tight">
+                            {uni.name}
+                          </div>
+                          <Link
+                            to={`/university/${uni.id}`}
+                            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-0.5 block"
+                          >
+                            View Details →
+                          </Link>
                         </div>
-                        <Link
-                          to={`/university/${uni.id}`}
-                          className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                        <button
+                          onClick={() => removeFromCompare(uni.id)}
+                          className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors shrink-0"
                         >
-                          View Details →
-                        </Link>
+                          <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        </button>
                       </div>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {comparisonRows.map((row, index) => (
-                  <tr
-                    key={index}
-                    className={index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'}
-                  >
-                    <td className="p-6 font-medium text-gray-900 dark:text-white sticky left-0 bg-inherit">
-                      {row.label}
-                    </td>
-                    {universities.map((uni) => {
-                      const value = uni[row.key as keyof typeof uni];
-                      const displayValue = row.format ? row.format(value) : value;
-                      
-                      return (
-                        <td key={uni.id} className="p-6 text-gray-700 dark:text-gray-300">
-                          {row.key === 'research' || row.key === 'housing' || row.key === 'scholarships' ? (
-                            <div className="flex items-center gap-2">
-                              {displayValue === 'Yes' || displayValue === 'Available' || displayValue === 'Excellent' ? (
-                                <>
-                                  <Check className="w-5 h-5 text-green-500 dark:text-green-400" />
-                                  <span>{displayValue}</span>
-                                </>
-                              ) : displayValue === 'Limited' ? (
-                                <>
-                                  <Minus className="w-5 h-5 text-orange-500 dark:text-orange-400" />
-                                  <span>{displayValue}</span>
-                                </>
-                              ) : (
-                                <span>{displayValue}</span>
-                              )}
+                {ROWS.map((row, rowIdx) => {
+                  // Compute best index for numeric rows
+                  const numerics = row.getNumeric
+                    ? compareList.map((u) => row.getNumeric!(u))
+                    : null;
+                  const bestIdx = numerics && row.bestMode
+                    ? getBestIndex(numerics, row.bestMode)
+                    : -1;
+
+                  return (
+                    <tr
+                      key={rowIdx}
+                      className={rowIdx % 2 === 0 ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'}
+                    >
+                      <td className="p-5 font-medium text-gray-700 dark:text-gray-300 sticky left-0 bg-inherit text-sm">
+                        {row.label}
+                      </td>
+                      {compareList.map((uni, colIdx) => {
+                        const isBest = bestIdx === colIdx;
+                        return (
+                          <td
+                            key={uni.id}
+                            className={`p-5 text-sm transition-colors ${
+                              isBest
+                                ? 'bg-yellow-50 dark:bg-yellow-900/20 font-semibold text-yellow-800 dark:text-yellow-300'
+                                : 'text-gray-700 dark:text-gray-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              {isBest && <Trophy className="w-3.5 h-3.5 text-yellow-500 shrink-0" />}
+                              {row.getValue(uni)}
                             </div>
-                          ) : (
-                            displayValue
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="mt-8 flex items-center justify-center gap-4">
-          <Link
-            to="/search"
-            className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
-          >
-            Add More Universities
-          </Link>
-          <button className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
-            Export Comparison
-          </button>
-        </div>
-
         {/* Tips */}
-        <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
-          <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-3">Comparison Tips</h3>
-          <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 dark:text-blue-400">•</span>
-              <span>Consider not just rankings, but also factors like location, cost, and program fit</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 dark:text-blue-400">•</span>
-              <span>Research opportunities and employment rates are key indicators of program quality</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 dark:text-blue-400">•</span>
-              <span>Check if scholarships are available to help with tuition costs</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 dark:text-blue-400">•</span>
-              <span>Visit university websites and connect with current students for insider perspectives</span>
-            </li>
+        <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-5">
+          <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2 text-sm">💡 Comparison Tips</h3>
+          <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-300 list-disc list-inside">
+            <li>Gold highlights show the best value in each category</li>
+            <li>Consider total cost = tuition + living cost when comparing</li>
+            <li>Higher acceptance rate = easier admission</li>
+            <li>Check scholarship availability to offset tuition costs</li>
           </ul>
         </div>
       </div>

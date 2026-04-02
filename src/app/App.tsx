@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
 import { ThemeProvider } from "./context/ThemeContext";
+import { CompareProvider } from "./context/CompareContext";
 import { supabase } from "../lib/supabase";
 
 // Public Pages
@@ -36,6 +37,9 @@ import { AIRecommendations } from "./pages/AIRecommendations";
 import { AISOP } from "./pages/AISOP";
 import { AITools } from "./pages/AITools";
 import { UniversityComparison } from "./pages/UniversityComparison";
+import { ResumeBuilderPage } from "./pages/ResumeBuilder/ResumeBuilderPage";
+import { MyResumesPage } from "./pages/ResumeBuilder/MyResumesPage";
+import { ResumeHistoryPage } from "./pages/ResumeBuilder/ResumeHistoryPage";
 
 // User Pages
 import { Profile } from "./pages/Profile";
@@ -107,6 +111,7 @@ export default function App() {
 
   return (
     <ThemeProvider>
+      <CompareProvider>
       <Router>
         <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
           <Navbar
@@ -231,6 +236,32 @@ export default function App() {
                 }
               />
 
+              {/* Resume Builder */}
+              <Route
+                path="/resume-builder"
+                element={
+                  <PrivateRoute isAuthenticated={isAuthenticated}>
+                    <ResumeBuilderPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/my-resumes"
+                element={
+                  <PrivateRoute isAuthenticated={isAuthenticated}>
+                    <MyResumesPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/resume-history"
+                element={
+                  <PrivateRoute isAuthenticated={isAuthenticated}>
+                    <ResumeHistoryPage />
+                  </PrivateRoute>
+                }
+              />
+
               {/* User Routes */}
               <Route
                 path="/profile"
@@ -258,6 +289,7 @@ export default function App() {
           <Footer />
         </div>
       </Router>
+      </CompareProvider>
     </ThemeProvider>
   );
 }

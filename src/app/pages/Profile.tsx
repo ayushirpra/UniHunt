@@ -1,6 +1,103 @@
-import { useState, useEffect } from 'react';
-import { User, Mail, GraduationCap, MapPin, Save, Edit2, Loader2, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { User, Mail, GraduationCap, MapPin, Save, Edit2, Loader2, AlertCircle, ChevronDown, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+
+const COUNTRIES = [
+  'USA', 'UK', 'Canada', 'Australia', 'Germany', 'France', 'Netherlands',
+  'Sweden', 'Switzerland', 'Singapore', 'Japan', 'South Korea', 'New Zealand',
+  'Ireland', 'Denmark', 'Norway', 'Finland', 'Austria', 'Italy', 'Spain',
+];
+
+function CountryMultiSelect({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  disabled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const selected = value ? value.split(',').map((c) => c.trim()).filter(Boolean) : [];
+
+  const toggle = useCallback(
+    (country: string) => {
+      const next = selected.includes(country)
+        ? selected.filter((c) => c !== country)
+        : [...selected, country];
+      onChange(next.join(', '));
+    },
+    [selected, onChange]
+  );
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        Preferred Countries
+      </label>
+
+      {/* Trigger */}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen((o) => !o)}
+        className="w-full min-h-[48px] px-4 py-2 flex flex-wrap items-center gap-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent outline-none disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-left"
+      >
+        {selected.length === 0 ? (
+          <span className="text-gray-400 dark:text-gray-500 text-sm">Select countries...</span>
+        ) : (
+          selected.map((c) => (
+            <span
+              key={c}
+              className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-medium"
+            >
+              {c}
+              {!disabled && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); toggle(c); }}
+                  className="hover:text-indigo-900 dark:hover:text-indigo-100"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </span>
+          ))
+        )}
+        <ChevronDown className={`w-4 h-4 text-gray-400 ml-auto shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute z-20 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+          {COUNTRIES.map((country) => (
+            <button
+              key={country}
+              type="button"
+              onClick={() => toggle(country)}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-900 dark:text-white hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+            >
+              {country}
+              {selected.includes(country) && (
+                <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Profile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -42,11 +139,16 @@ export function Profile() {
 
       if (error) throw error;
 
+      // preferred_countries is TEXT[] in Postgres — join array → string for UI
+      const countries = Array.isArray(data.preferred_countries)
+        ? data.preferred_countries.join(', ')
+        : data.preferred_countries || '';
+
       setProfile({
         fullName: data.full_name || '',
         email: user.email || '',
         academicLevel: data.academic_level || '',
-        preferredCountries: data.preferred_countries || '',
+        preferredCountries: countries,
         budgetMin: data.budget_min || 0,
         budgetMax: data.budget_max || 0,
         gpa: data.gpa || 0,
@@ -67,12 +169,17 @@ export function Profile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Convert comma-separated string → array for Postgres TEXT[] column
+      const countriesArray = profile.preferredCountries
+        ? profile.preferredCountries.split(',').map((c) => c.trim()).filter(Boolean)
+        : [];
+
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: profile.fullName,
           academic_level: profile.academicLevel,
-          preferred_countries: profile.preferredCountries,
+          preferred_countries: countriesArray,
           budget_min: profile.budgetMin,
           budget_max: profile.budgetMax,
           gpa: profile.gpa,
@@ -238,12 +345,12 @@ export function Profile() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">GPA (0-4.0)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">GPA (0-10)</label>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
-                  max="4"
+                  max="10"
                   value={profile.gpa}
                   onChange={(e) => setProfile({ ...profile, gpa: parseFloat(e.target.value) || 0 })}
                   disabled={!isEditing}
@@ -261,17 +368,11 @@ export function Profile() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Preferred Countries (comma separated)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., USA, UK, Canada"
+              <div className="md:col-span-2">
+                <CountryMultiSelect
                   value={profile.preferredCountries}
-                  onChange={(e) => setProfile({ ...profile, preferredCountries: e.target.value })}
+                  onChange={(val) => setProfile({ ...profile, preferredCountries: val })}
                   disabled={!isEditing}
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent outline-none disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:text-gray-600 dark:disabled:text-gray-400 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
               </div>
 

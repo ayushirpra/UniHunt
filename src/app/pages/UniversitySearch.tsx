@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Search, SlidersHorizontal, X, MapPin, DollarSign, Star, Loader2, AlertCircle } from 'lucide-react';
+import { Search, SlidersHorizontal, MapPin, DollarSign, Star, Loader2, AlertCircle } from 'lucide-react';
 import { UniversityCard } from '../components/UniversityCard';
+import { CompareBar } from '../components/CompareBar';
 import { supabase } from '@/lib/supabase';
 
 export function UniversitySearch() {
@@ -131,6 +132,29 @@ export function UniversitySearch() {
     });
   };
 
+  // Track application handler
+  const trackApplication = async (universityId: string, universityName: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { alert('Please log in to track applications'); return; }
+
+      const { error } = await supabase.from('applications').insert({
+        user_id: user.id,
+        university_id: universityId,
+        status: 'Interested',
+      });
+
+      if (error) {
+        if (error.code === '23505') alert('Already tracking this university!');
+        else throw error;
+      } else {
+        alert(`✅ ${universityName} added to your tracker!`);
+      }
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+    }
+  };
+
   const addToWishlist = async (universityId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -178,6 +202,7 @@ export function UniversitySearch() {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -391,6 +416,21 @@ export function UniversitySearch() {
                     logo_url={university.logo_url}
                     saved={savedUniversities.includes(university.id)}
                     onToggleSave={toggleSave}
+                    onTrack={trackApplication}
+                    rawData={{
+                      ranking: university.ranking,
+                      tuition_min: university.tuition_min,
+                      tuition_max: university.tuition_max,
+                      acceptance_rate: university.acceptance_rate,
+                      gpa_requirement: university.gpa_requirement,
+                      ielts_requirement: university.ielts_requirement,
+                      toefl_requirement: university.toefl_requirement,
+                      living_cost: university.living_cost,
+                      course_duration: university.course_duration,
+                      scholarships: university.scholarships,
+                      deadline: university.deadline,
+                      logo_url: university.logo_url,
+                    }}
                   />
                 );
               })}
@@ -401,5 +441,7 @@ export function UniversitySearch() {
         </div>
       </div>
     </div>
+    <CompareBar />
+    </>
   );
 }

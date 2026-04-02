@@ -7,6 +7,8 @@ import {
 import { useState, useEffect } from "react";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
+import { AnimatedBackground } from "./components/AnimatedBackground";
+import { CursorGlow } from "./components/CursorGlow";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CompareProvider } from "./context/CompareContext";
 import { supabase } from "../lib/supabase";
@@ -112,13 +114,15 @@ export default function App() {
   return (
     <ThemeProvider>
       <CompareProvider>
-      <Router>
-        <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
+        <AnimatedBackground />
+        <CursorGlow />
+        <Router>
+        <div className="min-h-screen flex flex-col bg-transparent text-foreground transition-colors duration-300 overflow-hidden relative">
           <Navbar
             isAuthenticated={isAuthenticated}
             onLogout={handleLogout}
           />
-          <main className="flex-1">
+          <main className="flex-1 animate-fade-in z-10 w-full flex flex-col">
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Landing />} />
@@ -288,7 +292,7 @@ export default function App() {
           </main>
           <Footer />
         </div>
-      </Router>
+        </Router>
       </CompareProvider>
     </ThemeProvider>
   );

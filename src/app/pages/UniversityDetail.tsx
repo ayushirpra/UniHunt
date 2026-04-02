@@ -2,22 +2,18 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   Heart,
   MapPin,
-  Star,
-  DollarSign,
   Calendar,
-  Users,
   Globe,
   BookOpen,
   Award,
   ChevronRight,
   CheckCircle,
-  Clock,
-  FileText,
   Loader2,
   AlertCircle,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getPlaceholderCampus } from '@/lib/imageUtils';
 
 export function UniversityDetail() {
   const { id } = useParams();
@@ -197,13 +193,13 @@ export function UniversityDetail() {
       {/* Hero Section */}
       <div className="relative h-80 bg-gradient-to-br from-indigo-600 to-blue-500">
         <img
-          src={university.logo_url || university.image_url || 'https://images.unsplash.com/photo-1679653226697-2b0fbf7c17f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwYnVpbGRpbmd8ZW58MXx8fHwxNzcwMjczNjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080'}
+          src={university.image_url || getPlaceholderCampus(university.name)}
           alt={university.name}
           onError={(e) => {
-            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(university.name)}&size=800&background=4F46E5&color=fff&bold=true`;
+            e.currentTarget.src = getPlaceholderCampus(university.name);
           }}
           loading="lazy"
-          className="w-full h-full object-cover mix-blend-overlay opacity-20"
+          className="w-full h-full object-cover mix-blend-overlay opacity-30 object-center transition-transform duration-1000 animate-zoom-in"
         />
         <div className="absolute inset-0 flex items-end">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
@@ -419,10 +415,29 @@ export function UniversityDetail() {
                   <Link
                     key={index}
                     to={`/university/${index + 2}`}
-                    className="block p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    className="group relative flex items-center gap-3 p-3 rounded-lg overflow-hidden border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all duration-300"
                   >
-                    <div className="font-medium text-gray-900 dark:text-white text-sm">{uni}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">Cambridge, USA</div>
+                    {/* Background image effect on hover */}
+                    <div className="absolute inset-0 bg-gray-50 dark:bg-gray-700 group-hover:opacity-0 transition-opacity" />
+                    <img 
+                      src={getPlaceholderCampus(uni)} 
+                      alt="" 
+                      className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-10 transition-opacity duration-300"
+                    />
+                    
+                    {/* Thumbnail */}
+                    <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 shadow-sm relative z-10 border border-white/50 dark:border-gray-600">
+                      <img 
+                        src={getPlaceholderCampus(uni)} 
+                        alt="" 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    </div>
+                    
+                    <div className="relative z-10">
+                      <div className="font-medium text-gray-900 dark:text-white text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{uni}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">California, USA</div>
+                    </div>
                   </Link>
                 ))}
               </div>

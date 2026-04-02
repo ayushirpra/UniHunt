@@ -1,6 +1,7 @@
 import { X, Trophy, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCompare } from '../context/CompareContext';
+import { getPlaceholderLogo } from '@/lib/imageUtils';
 
 // Highlight the best (lowest/highest) value in a row
 function getBestIndex(values: (number | null)[], mode: 'min' | 'max'): number {
@@ -140,14 +141,12 @@ export function UniversityComparison() {
                     <th key={uni.id} className="p-5 min-w-[220px] text-left">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          {uni.logo_url && (
-                            <img
-                              src={uni.logo_url}
-                              alt={uni.name}
-                              className="w-10 h-10 object-contain rounded mb-2"
-                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                            />
-                          )}
+                          <img
+                            src={uni.logo_url || getPlaceholderLogo(uni.name)}
+                            alt={uni.name}
+                            className="w-12 h-12 object-contain rounded-lg mb-3 bg-white/50 backdrop-blur-sm p-1 border border-indigo-100 shadow-sm transition-transform duration-300 hover:scale-110"
+                            onError={(e) => { e.currentTarget.src = getPlaceholderLogo(uni.name); }}
+                          />
                           <div className="font-semibold text-gray-900 dark:text-white text-base leading-tight">
                             {uni.name}
                           </div>

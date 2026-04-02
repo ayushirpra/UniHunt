@@ -3,6 +3,7 @@ import { Heart, Trash2, BarChart2, Grid, List, Loader2, AlertCircle } from 'luci
 import { UniversityCard } from '../components/UniversityCard';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { getPlaceholderCampus, getPlaceholderLogo } from '@/lib/imageUtils';
 
 export function Wishlist() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -219,23 +220,37 @@ export function Wishlist() {
                       />
                     </div>
                   ) : (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 flex items-center gap-6">
-                      <input
-                        type="checkbox"
-                        checked={selectedForComparison.includes(university.id)}
-                        onChange={() => toggleComparison(university.id)}
-                        className="w-5 h-5 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:bg-gray-900"
-                      />
-                      <img
-                        src={university.logo_url || university.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(university.name)}&size=200&background=4F46E5&color=fff&bold=true`}
-                        alt={university.name}
-                        onError={(e) => {
-                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(university.name)}&size=200&background=4F46E5&color=fff&bold=true`;
-                        }}
-                        loading="lazy"
-                        className="w-24 h-24 rounded-lg object-contain p-2 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20"
-                      />
-                      <div className="flex-1">
+                    <div className="group bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-start gap-6 hover:shadow-lg transition-shadow duration-300">
+                      <div className="flex shrink-0 items-center gap-3 w-full sm:w-auto">
+                        <input
+                          type="checkbox"
+                          checked={selectedForComparison.includes(university.id)}
+                          onChange={() => toggleComparison(university.id)}
+                          className="w-5 h-5 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:bg-gray-900 shrink-0"
+                        />
+                        <Link to={`/university/${university.id}`} className="relative block w-full sm:w-36 h-24 rounded-xl overflow-hidden shrink-0 border border-gray-100 dark:border-gray-700">
+                          {/* Campus Background Image with Zoom */}
+                          <img
+                            src={getPlaceholderCampus(university.name)}
+                            alt={`${university.name} campus cover`}
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          />
+                          {/* Gradient Vignette Overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-gray-900/10 pointer-events-none group-hover:opacity-80 transition-opacity" />
+                          {/* Floating Logo Badge */}
+                          <div className="absolute bottom-2 left-2 w-10 h-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-lg p-1 shadow-sm border border-white/20 transition-transform duration-300 group-hover:-translate-y-1">
+                             <img
+                              src={university.logo_url || getPlaceholderLogo(university.name)}
+                              alt={`${university.name} logo`}
+                              loading="lazy"
+                              className="w-full h-full object-contain rounded"
+                              onError={(e) => { e.currentTarget.src = getPlaceholderLogo(university.name); }}
+                             />
+                          </div>
+                        </Link>
+                      </div>
+                      <div className="flex-1 min-w-0">
                         <Link
                           to={`/university/${university.id}`}
                           className="text-lg font-semibold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 mb-1 block"

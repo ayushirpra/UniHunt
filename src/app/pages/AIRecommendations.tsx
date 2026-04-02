@@ -2,6 +2,7 @@ import { Sparkles, Target, Heart, ArrowRight, RefreshCw, MapPin, DollarSign, Sta
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { getPlaceholderCampus, getPlaceholderLogo } from '@/lib/imageUtils';
 
 interface University {
   id: string;
@@ -113,17 +114,7 @@ function ScoreCircle({ score }: { score: number }) {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
-      <div className="flex gap-5">
-        <div className="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0" />
-        <div className="flex-1 space-y-3">
-          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6" />
-        </div>
-      </div>
-    </div>
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 h-40 animate-pulse" />
   );
 }
 
@@ -408,21 +399,35 @@ export function AIRecommendations() {
               matches.map((match, idx) => (
                 <div
                   key={match.university.id}
-                  className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300"
+                  className="group relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-2xl transition-all duration-300"
                   style={{ animationDelay: `${idx * 80}ms` }}
                 >
-                  <div className="flex items-start gap-5 p-6">
+                  {/* Campus Cover Image */}
+                  <div className="absolute inset-x-0 top-0 h-28 overflow-hidden pointer-events-none">
+                     <img 
+                       src={getPlaceholderCampus(match.university.name)} 
+                       alt="campus background" 
+                       className="w-full h-full object-cover transition-transform duration-[1000ms] group-hover:scale-110 group-hover:rotate-1"
+                     />
+                     {/* Gradient overlay */}
+                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/50 to-transparent" />
+                  </div>
+
+                   <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 p-6 pt-16">
                     <ScoreCircle score={match.score} />
-                    <div className="flex-1 min-w-0">
+                    
+                    <div className="flex-1 min-w-0 w-full">
                       <div className="flex items-start justify-between mb-1">
                         <div>
-                          {match.university.logo_url && (
-                            <img src={match.university.logo_url} alt="" className="w-8 h-8 rounded object-contain mb-1" />
-                          )}
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white leading-tight">
+                          {/* Logo badge overlapping image */}
+                          <div className="w-12 h-12 rounded-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-md p-1 shadow-lg border border-white/20 mb-2 mt-[-3.5rem] transition-transform duration-500 group-hover:-translate-y-1">
+                            <img src={match.university.logo_url || getPlaceholderLogo(match.university.name)} onError={(e) => { e.currentTarget.src = getPlaceholderLogo(match.university.name); }} alt="" className="w-full h-full object-contain rounded-lg" />
+                          </div>
+
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
                             {match.university.name}
                           </h3>
-                          <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                          <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 mt-1">
                             <MapPin className="w-3.5 h-3.5" />
                             {match.university.city}, {match.university.country}
                           </div>
@@ -430,35 +435,39 @@ export function AIRecommendations() {
                         <button
                           onClick={() => toggleWishlist(match.university.id)}
                           disabled={togglingId === match.university.id}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ml-2 shrink-0"
+                          className="p-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full shadow-sm hover:scale-110 transition-transform ml-2 shrink-0 z-10"
                         >
-                          <Heart className={`w-5 h-5 transition-colors ${wishlist.includes(match.university.id) ? 'fill-red-500 text-red-500' : 'text-gray-400 dark:text-gray-500'}`} />
+                          <Heart className={`w-5 h-5 transition-colors ${wishlist.includes(match.university.id) ? 'fill-red-500 text-red-500' : 'text-gray-400 dark:text-gray-500 hover:text-red-500'}`} />
                         </button>
                       </div>
 
-                      <div className="flex flex-wrap gap-4 my-3 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex flex-wrap gap-4 my-4 text-sm text-gray-600 dark:text-gray-400 font-medium">
                         {match.university.world_ranking < 9999 && (
-                          <span className="flex items-center gap-1">
-                            <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                          <span className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                            <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
                             Rank #{match.university.world_ranking}
                           </span>
                         )}
                         {(match.university.tuition_min > 0 || match.university.tuition_max > 0) && (
-                          <span className="flex items-center gap-1">
-                            <DollarSign className="w-3.5 h-3.5" />
+                          <span className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                            <DollarSign className="w-3.5 h-3.5 text-green-600" />
                             ${((match.university.tuition_min || match.university.tuition_max) / 1000).toFixed(0)}k/yr
                           </span>
                         )}
                         {match.university.acceptance_rate > 0 && (
-                          <span>{match.university.acceptance_rate}% acceptance</span>
+                          <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                             {match.university.acceptance_rate}% acceptance
+                          </span>
                         )}
                       </div>
 
-                      <div className="mb-4">
-                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Why this match?</p>
-                        <div className="space-y-1">
+                      <div className="mb-5 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-lg p-3 border border-indigo-100 dark:border-indigo-800">
+                        <p className="text-xs font-bold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider mb-2">Why this match?</p>
+                        <div className="space-y-1.5 flex flex-col">
                           {match.reasons.map((r, i) => (
-                            <p key={i} className="text-sm text-gray-600 dark:text-gray-400">{r}</p>
+                            <div key={i} className="flex gap-2 text-sm text-gray-700 dark:text-gray-300">
+                              <span className="opacity-70 mt-0.5">•</span> <span>{r}</span>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -466,17 +475,10 @@ export function AIRecommendations() {
                       <div className="flex items-center gap-3">
                         <Link
                           to={`/university/${match.university.id}`}
-                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+                          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors border border-transparent shadow-md"
                         >
                           View Details
                         </Link>
-                        <button
-                          onClick={() => toggleWishlist(match.university.id)}
-                          disabled={togglingId === match.university.id}
-                          className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                        >
-                          {wishlist.includes(match.university.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
-                        </button>
                       </div>
                     </div>
                   </div>

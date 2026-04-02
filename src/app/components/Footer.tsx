@@ -3,8 +3,8 @@ import { GraduationCap, Mail, MapPin, Phone } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="bg-gray-900 dark:bg-gray-950 text-gray-300 dark:text-gray-400 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <footer className="glass-panel border-t border-indigo-100 dark:border-indigo-900/30 text-gray-700 dark:text-gray-300 transition-colors duration-300 mt-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
@@ -12,7 +12,7 @@ export function Footer() {
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-blue-500 flex items-center justify-center">
                 <GraduationCap className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-semibold text-white">UniHunt AI</span>
+              <span className="text-xl font-semibold text-gray-900 dark:text-white">UniHunt AI</span>
             </div>
             <p className="text-sm">
               Your AI-powered companion for discovering and applying to universities worldwide.
@@ -21,18 +21,18 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-white font-medium mb-4">Quick Links</h3>
+            <h3 className="text-gray-900 dark:text-white font-medium mb-4">Quick Links</h3>
             <div className="space-y-2">
-              <Link to="/about" className="block text-sm hover:text-white transition-colors">
+              <Link to="/about" className="block text-sm hover:text-indigo-500 transition-colors">
                 About Us
               </Link>
-              <Link to="/how-it-works" className="block text-sm hover:text-white transition-colors">
+              <Link to="/how-it-works" className="block text-sm hover:text-indigo-500 transition-colors">
                 How It Works
               </Link>
-              <Link to="/pricing" className="block text-sm hover:text-white transition-colors">
+              <Link to="/pricing" className="block text-sm hover:text-indigo-500 transition-colors">
                 Pricing
               </Link>
-              <Link to="/contact" className="block text-sm hover:text-white transition-colors">
+              <Link to="/contact" className="block text-sm hover:text-indigo-500 transition-colors">
                 Contact
               </Link>
             </div>
@@ -40,18 +40,18 @@ export function Footer() {
 
           {/* Resources */}
           <div>
-            <h3 className="text-white font-medium mb-4">Resources</h3>
+            <h3 className="text-gray-900 dark:text-white font-medium mb-4">Resources</h3>
             <div className="space-y-2">
-              <a href="#" className="block text-sm hover:text-white transition-colors">
+              <a href="#" className="block text-sm hover:text-indigo-500 transition-colors">
                 Blog
               </a>
-              <a href="#" className="block text-sm hover:text-white transition-colors">
+              <a href="#" className="block text-sm hover:text-indigo-500 transition-colors">
                 Help Center
               </a>
-              <a href="#" className="block text-sm hover:text-white transition-colors">
+              <a href="#" className="block text-sm hover:text-indigo-500 transition-colors">
                 Privacy Policy
               </a>
-              <a href="#" className="block text-sm hover:text-white transition-colors">
+              <a href="#" className="block text-sm hover:text-indigo-500 transition-colors">
                 Terms of Service
               </a>
             </div>
@@ -59,7 +59,7 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-white font-medium mb-4">Contact Us</h3>
+            <h3 className="text-gray-900 dark:text-white font-medium mb-4">Contact Us</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-2 text-sm">
                 <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" />

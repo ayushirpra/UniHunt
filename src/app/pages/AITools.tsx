@@ -37,7 +37,7 @@ export function AITools() {
       gradient: 'from-green-600 to-emerald-600',
       link: '/ai-resume',
       features: ['ATS-friendly formats', 'Smart suggestions', 'Export to PDF'],
-      available: false,
+      available: true,
     },
     {
       id: 'interview-prep',

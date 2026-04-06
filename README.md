@@ -1,84 +1,93 @@
-# 🎓 UniHunt AI
+🎓 UniHunt AI
 
-An AI-powered university search and application platform built with React, TypeScript, and Supabase.
+An intelligent platform to discover, compare, and apply to universities worldwide — powered by AI.
 
-## 🌟 Features
+🌟 Features
+🔐 Authentication
+Secure login & signup using Supabase Auth
+🔍 Smart University Search
+Explore and filter 100+ universities globally
+💾 Wishlist System
+Save and manage your preferred universities
+📋 Application Tracker (In Progress)
+Track application stages and status
+⏰ Deadline Manager (In Progress)
+Stay updated with important deadlines
+🤖 AI SOP Generator
+Generate personalized Statements of Purpose
+🎯 AI University Recommendations (Coming Soon)
+Get best-fit universities based on your profile
+🌙 Dark Mode UI
+Fully responsive and modern UI with dark mode
+📱 Responsive Design
+Optimized for mobile, tablet, and desktop
+🛠️ Tech Stack
+Frontend: React, TypeScript, Tailwind CSS, Vite
+Backend: Supabase (Auth, Database, Storage)
+UI: shadcn/ui, Radix UI, Lucide Icons
+Routing: React Router
+🚀 Getting Started
+Prerequisites
+Node.js (v18 or higher)
+npm / pnpm
+Supabase account
+Installation
+# Clone repo
+git clone https://github.com/YOUR_USERNAME/unihunt-ai.git
 
-- 🔐 **Authentication** - Secure signup/login with Supabase Auth
-- 🔍 **University Search** - Search and filter 100+ universities worldwide
-- 💾 **Wishlist** - Save and manage favorite universities
-- 📋 **Application Tracker** - Track application status and progress
-- ⏰ **Deadline Manager** - Never miss an application deadline
-- 🤖 **AI SOP Generator** - Generate personalized Statements of Purpose
-- 🎯 **AI Recommendations** - Get matched with best-fit universities
-- 🌙 **Dark Mode** - Full dark mode support
-- 📱 **Responsive** - Works on all devices
+# Navigate to project
+cd unihunt-ai
 
-## 🛠️ Tech Stack
+# Install dependencies
+npm install
 
-- **Frontend:** React 18, TypeScript, Tailwind CSS, Vite
-- **Backend:** Supabase (PostgreSQL, Auth, Storage)
-- **UI Components:** shadcn/ui, Radix UI, Lucide Icons
-- **Routing:** React Router v7
+# Start dev server
+npm run dev
 
-## 🚀 Getting Started
+Open 👉 http://localhost:5173
 
-### Prerequisites
-- Node.js 18+
-- npm or pnpm
-- Supabase account
-
-### Installation
-
-1. Clone the repository
-```bash
-   git clone https://github.com/YOUR_USERNAME/unihunt-ai.git
-   cd unihunt-ai
-```
-
-2. Install dependencies
-```bash
-   npm install
-```
-
-3. Start the development server
-```bash
-   npm run dev
-```
-
-4. Open your browser at `http://localhost:5173`
-
-## 📁 Project Structure
-```
+📁 Project Structure
 src/
 ├── app/
-│   ├── components/     # Reusable components (Navbar, Footer, etc.)
-│   ├── pages/          # All page components (20+ pages)
-│   └── context/        # Theme context
+│   ├── components/   # Reusable UI components
+│   ├── pages/        # Page-level components
+│   └── context/      # Global state (theme etc.)
 ├── lib/
-│   └── supabase.ts     # Supabase client
-└── styles/             # Global styles
-```
+│   └── supabase.ts   # Backend config
+└── styles/           # Global styles
+🔑 Environment Setup
 
-## 🔑 Environment Setup
+Supabase is pre-configured in:
 
-This project uses Supabase for backend services. The configuration is already set up in `src/lib/supabase.ts`.
+src/lib/supabase.ts
 
-## 📊 Current Status
+For production:
 
-- ✅ Authentication (Login/Signup)
-- ✅ University Search with real data
-- ✅ Dark mode across all pages
-- ✅ AI Tools section
-- 🚧 Wishlist (in progress)
-- 🚧 Application Tracker (in progress)
-- 🚧 AI Features (coming soon)
+Replace with your own Supabase project keys
+Use environment variables for security
+📊 Project Status
+✅ Core UI & Authentication
+✅ University Search
+✅ Dark Mode
+🚧 Wishlist System
+🚧 Application Tracker
+🚧 AI Enhancements
 
-## 🌐 Live Demo
+🌐 Live Demo
+https://unihunt-ai.vercel.app/
 
-Coming soon!
+💡 Future Improvements
+AI-based admission probability prediction
+Resume & profile analyzer
+Scholarship recommendations
+Multi-user collaboration features
+🤝 Contributing
 
----
+Contributions are welcome!
+Feel free to fork the repo and submit a PR.
 
-**Built with ❤️ for students worldwide**
-  
+⭐ Support
+
+If you like this project, consider giving it a star ⭐ on GitHub!
+
+Built with ❤️ to simplify university applications worldwide 🌍

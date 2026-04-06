@@ -1,41 +1,84 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { GraduationCap, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { useState } from "react";
+import { GraduationCap } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
-interface LoginProps {
-  onLogin: () => void;
-}
-
-export function Login({ onLogin }: LoginProps) {
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+export function Login() {
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const mapAuthError = (message: string) => {
+    const lower = message.toLowerCase();
+
+    if (lower.includes("email not confirmed")) {
+      return "Email not confirmed yet. Please verify your inbox before logging in.";
+    }
+    if (lower.includes("user not found")) {
+      return "User not found. Please sign up first.";
+    }
+    if (lower.includes("invalid login credentials") || lower.includes("invalid password") || lower.includes("wrong password")) {
+      return "Wrong password. Please try again.";
+    }
+
+    return message;
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
+    setSuccess("");
     setLoading(true);
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+    if (mode === "login") {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
-
-      if (data.user) {
-        onLogin();
-        navigate('/dashboard');
+      if (signInError) {
+        setError(mapAuthError(signInError.message || "Failed to log in."));
+        setLoading(false);
+        return;
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to sign in');
-      console.error('Login error:', error);
-    } finally {
+    } else {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (signUpError) {
+        setError(signUpError.message || "Failed to sign up.");
+        setLoading(false);
+        return;
+      }
+
+      setSuccess("Check your email to confirm your account before logging in");
+      setMode("login");
+      setPassword("");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    const { error: signInError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (signInError) {
+      setError(signInError.message || "Failed to sign in with Google");
       setLoading(false);
     }
   };
@@ -48,73 +91,56 @@ export function Login({ onLogin }: LoginProps) {
             <GraduationCap className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h1>
-          <p className="text-gray-600 dark:text-gray-400">Sign in to your UniHunt AI account</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            {mode === "login" ? "Log in with email/password or Google" : "Create an account with email/password"}
+          </p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-transparent dark:border-gray-700">
+          {success && (
+            <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <p className="text-sm text-green-700 dark:text-green-300">{success}</p>
+            </div>
+          )}
+
           {error && (
             <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleEmailAuth} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
+                Email
               </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                  placeholder="Your email address"
-                  required
-                  disabled={loading}
-                />
-              </div>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                placeholder="you@example.com"
+              />
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Password
               </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                  placeholder="••••••••"
-                  required
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:bg-gray-900"
-                />
-                <span className="text-sm text-gray-600 dark:text-gray-400">Remember me</span>
-              </label>
-              <Link to="/forgot-password" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">
-                Forgot password?
-              </Link>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                disabled={loading}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                placeholder="••••••••"
+              />
             </div>
 
             <button
@@ -122,16 +148,39 @@ export function Login({ onLogin }: LoginProps) {
               disabled={loading}
               className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? (mode === "login" ? "Logging in..." : "Signing up...") : mode === "login" ? "Login" : "Sign Up"}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
-              Sign up
-            </Link>
+          <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+            {mode === "login" ? "Need an account?" : "Already have an account?"}{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === "login" ? "signup" : "login");
+                setError("");
+                setSuccess("");
+              }}
+              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
+            >
+              {mode === "login" ? "Sign Up" : "Login"}
+            </button>
           </div>
+
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+            <span className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">or</span>
+            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Redirecting..." : "Continue with Google"}
+          </button>
         </div>
       </div>
     </div>

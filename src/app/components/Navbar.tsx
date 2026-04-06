@@ -2,16 +2,16 @@ import { Link, useLocation } from 'react-router-dom';
 import { GraduationCap, Menu, X, User, LogOut, Brain, FileText, MessageSquare, Sparkles, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
+import { useAuth } from '../context/AuthContext';
 
-interface NavbarProps {
-  isAuthenticated?: boolean;
-  onLogout?: () => void;
-}
-
-export function Navbar({ isAuthenticated = false, onLogout }: NavbarProps) {
+export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aiToolsOpen, setAiToolsOpen] = useState(false);
   const location = useLocation();
+  const { user, session, signOut } = useAuth();
+  const isAuthenticated = Boolean(session);
+  const userName = (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'User') as string;
+  const profileImage = (user?.user_metadata?.avatar_url || user?.user_metadata?.picture) as string | undefined;
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -125,15 +125,20 @@ export function Navbar({ isAuthenticated = false, onLogout }: NavbarProps) {
             <ThemeToggle />
             {isAuthenticated ? (
               <>
-                <Link
-                  to="/profile"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
-                >
-                  <User className="w-4 h-4" />
-                  Profile
+                <Link to="/profile" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200">
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt={userName}
+                      className="w-6 h-6 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-4 h-4" />
+                  )}
+                  <span className="max-w-[140px] truncate">{userName}</span>
                 </Link>
                 <button
-                  onClick={onLogout}
+                  onClick={() => void signOut()}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
                 >
                   <LogOut className="w-4 h-4" />
@@ -222,9 +227,14 @@ export function Navbar({ isAuthenticated = false, onLogout }: NavbarProps) {
               {isAuthenticated ? (
                 <>
                   <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                    <User className="w-4 h-4" /> Profile
+                    {profileImage ? (
+                      <img src={profileImage} alt={userName} className="w-5 h-5 rounded-full object-cover" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
+                    <span className="truncate">{userName}</span>
                   </Link>
-                  <button onClick={() => { onLogout?.(); setMobileMenuOpen(false); }} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left">
+                  <button onClick={() => { void signOut(); setMobileMenuOpen(false); }} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left">
                     <LogOut className="w-4 h-4" /> Logout
                   </button>
                 </>

@@ -4,6 +4,7 @@ import {
   Loader2, Check, Trash2, ChevronDown, ChevronUp, Save, Clock,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { postProtectedApi } from '@/lib/apiClient';
 
 interface SOPHistory {
   id: string;
@@ -16,12 +17,6 @@ interface SOPHistory {
 
 const inputClass =
   'w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500';
-
-const variations = [
-  'I am writing to express my genuine interest',
-  'It is with great enthusiasm that I apply',
-  'I am excited to submit my application',
-];
 
 export function AISOP() {
   const [formData, setFormData] = useState({
@@ -36,7 +31,7 @@ export function AISOP() {
   const [userName, setUserName] = useState('');
   const [uniSuggestions, setUniSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [variationIndex, setVariationIndex] = useState(0);
+  const [errorMessage, setErrorMessage] = useState('');
   const sopRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -70,61 +65,26 @@ export function AISOP() {
     setShowSuggestions(true);
   };
 
-  const generateSOP = (variation = variationIndex) => {
-    const { university, program, background, achievements, careerGoals } = formData;
-    const opener = variations[variation % variations.length];
-    return `Dear Admissions Committee,
-
-${opener} in the ${program} program at ${university}. ${
-      background
-        ? background.split('.')[0] + '.'
-        : 'My academic journey has been defined by a relentless pursuit of excellence and a deep passion for my field.'
-    }
-
-Academic Background and Achievements:
-${
-  achievements
-    ? `${achievements} These accomplishments have equipped me with a strong foundation and the analytical skills necessary to thrive in a rigorous academic environment.`
-    : 'Throughout my academic career, I have maintained a strong GPA while actively engaging in research and practical applications of theoretical concepts, demonstrating both dedication and intellectual curiosity.'
-}
-
-Why ${university}:
-${university} is renowned for its excellence in ${program} and its commitment to cutting-edge research. The distinguished faculty and world-class research facilities at ${university} align perfectly with my academic goals. I am particularly drawn to the collaborative environment and the opportunity to contribute to groundbreaking work that ${university} is known for.
-
-Career Aspirations:
-${
-  careerGoals
-    ? `${careerGoals} I am committed to leveraging the knowledge and skills gained from this program to make a meaningful impact in my field.`
-    : 'Upon completing this program, I aim to apply my enhanced expertise to solve real-world challenges and contribute meaningfully to both industry and academia.'
-}
-
-I am confident that my background, combined with ${university}'s world-class resources, will enable me to make meaningful contributions to both the academic community and my chosen field.
-
-Thank you for considering my application.
-
-Sincerely,
-${userName || '[Your Name]'}`;
-  };
-
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!formData.university || !formData.program) return;
+    setErrorMessage('');
     setIsGenerating(true);
-    const delay = 2000 + Math.random() * 1000;
-    setTimeout(() => {
-      setGeneratedSOP(generateSOP(variationIndex));
+
+    try {
+      const data = await postProtectedApi<{ sop: string }>('/sop/generate', {
+        ...formData,
+        userName,
+      });
+
+      setGeneratedSOP(data?.sop || '');
+    } catch (error) {
+      setErrorMessage('Could not generate SOP right now. Please try again.');
+    } finally {
       setIsGenerating(false);
-    }, delay);
+    }
   };
 
-  const handleRegenerate = () => {
-    const next = (variationIndex + 1) % variations.length;
-    setVariationIndex(next);
-    setIsGenerating(true);
-    setTimeout(() => {
-      setGeneratedSOP(generateSOP(next));
-      setIsGenerating(false);
-    }, 1500);
-  };
+  const handleRegenerate = async () => handleGenerate();
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(generatedSOP);
@@ -305,6 +265,9 @@ ${userName || '[Your Name]'}`;
                     </>
                   )}
                 </button>
+                {errorMessage && (
+                  <p className="text-sm text-red-600 dark:text-red-400">{errorMessage}</p>
+                )}
               </div>
             </div>
 

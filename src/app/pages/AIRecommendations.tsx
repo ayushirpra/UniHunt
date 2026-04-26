@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { getPlaceholderCampus, getPlaceholderLogo } from '@/lib/imageUtils';
+import { postProtectedApi } from '@/lib/apiClient';
 
 interface University {
   id: string;
@@ -37,61 +38,13 @@ function clampBudget(val: number) {
   return Math.min(Math.max(Number(val) || 0, 0), MAX_BUDGET);
 }
 
-function runAlgorithm(unis: University[], budgetMin: number, budgetMax: number, gpa: number, preferredCountries: string[]): Match[] {
-  const countries = preferredCountries.map((c) => c.toLowerCase().trim());
-
-  return unis
-    .map((u) => {
-      let score = 10;
-      const reasons: string[] = [];
-
-      const tMin = Number(u.tuition_min) || 0;
-      const tMax = Number(u.tuition_max) || tMin;
-      const ranking = Number(u.world_ranking) || 9999;
-
-      // Budget (30 pts)
-      if (tMin === 0 && tMax === 0) {
-        score += 15;
-        reasons.push('💰 Tuition info not available — contact university for details');
-      } else if (tMin <= budgetMax && (tMax === 0 || tMax >= budgetMin)) {
-        score += 30;
-        reasons.push(`💰 Budget Fit: Tuition $${(tMin / 1000).toFixed(0)}k–$${(tMax / 1000).toFixed(0)}k fits your $${(budgetMin / 1000).toFixed(0)}k–$${(budgetMax / 1000).toFixed(0)}k range`);
-      } else if (tMin <= budgetMax * 1.3) {
-        score += 10;
-        reasons.push(`💰 Near Budget: Tuition $${(tMin / 1000).toFixed(0)}k–$${(tMax / 1000).toFixed(0)}k is close to your range`);
-      }
-
-      // Country (25 pts)
-      if (countries.length > 0 && countries.includes((u.country || '').toLowerCase())) {
-        score += 25;
-        reasons.push(`📍 Location Match: Located in ${u.country}, one of your preferred countries`);
-      }
-
-      // GPA (25 pts) — 0–10 scale
-      if (gpa > 0) {
-        const reqGPA = ranking <= 20 ? 9.2 : ranking <= 50 ? 8.75 : 8.0;
-        if (gpa >= reqGPA) {
-          score += 25;
-          reasons.push(`🎓 Academic Match: Your ${gpa} GPA ${gpa > reqGPA ? 'exceeds' : 'meets'} the ~${reqGPA} requirement`);
-        } else if (gpa >= reqGPA - 1) {
-          score += 10;
-          reasons.push(`🎓 Academic Potential: Your ${gpa} GPA is close to the ~${reqGPA} requirement`);
-        }
-      }
-
-      // Ranking bonus (20 pts)
-      if (ranking <= 10) { score += 20; reasons.push(`⭐ Elite Institution: Ranked #${ranking} globally`); }
-      else if (ranking <= 30) { score += 15; reasons.push(`⭐ Top-Tier University: Ranked #${ranking} globally`); }
-      else if (ranking <= 50) { score += 10; reasons.push(`⭐ Highly Ranked: #${ranking} globally`); }
-
-      if (reasons.length === 0) reasons.push('🎓 Matches your general academic profile');
-
-      score += Math.floor(Math.random() * 11) - 5;
-      return { university: u, score: Math.min(100, Math.max(5, score)), reasons };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
-}
+type RecommendationApiResponse = {
+  recommendations: {
+    university: string;
+    reason: string;
+    match_score: number;
+  }[];
+};
 
 function ScoreCircle({ score }: { score: number }) {
   const r = 34;
@@ -126,6 +79,7 @@ export function AIRecommendations() {
   const [pageLoading, setPageLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [generated, setGenerated] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [allCountries, setAllCountries] = useState<string[]>([]);
 
   // Filters — use refs so handleGenerate always reads latest values
@@ -195,7 +149,7 @@ export function AIRecommendations() {
     if (!profile) return;
     setAnalyzing(true);
     setGenerated(false);
-    await new Promise((r) => setTimeout(r, 2000));
+    setErrorMessage('');
 
     const preferredCountries: string[] = profile.preferred_countries
       ? (Array.isArray(profile.preferred_countries)
@@ -209,16 +163,60 @@ export function AIRecommendations() {
 
     const bMin = sliderBudgetMinRef.current;
     const bMax = sliderBudgetMaxRef.current;
-    const gpa = Number(profile.gpa) || 0;
+    const payload = {
+      profile,
+      filters: {
+        country,
+        level: filterLevel,
+        budget_min: bMin,
+        budget_max: bMax,
+      },
+      universities: unis.map((u) => ({
+        id: u.id,
+        name: u.name,
+        city: u.city,
+        country: u.country,
+        world_ranking: u.world_ranking,
+        tuition_min: u.tuition_min,
+        tuition_max: u.tuition_max,
+        acceptance_rate: u.acceptance_rate,
+      })),
+      preferredCountries,
+    };
 
-    console.log('[AI Recs] unis:', unis.length, 'budgetMin:', bMin, 'budgetMax:', bMax, 'gpa:', gpa, 'countries:', preferredCountries);
+    try {
+      const data = await postProtectedApi<RecommendationApiResponse>('/recommend', payload);
+      const results: Match[] = (data.recommendations || []).map((rec, idx) => {
+        const university = unis.find((u) => u.name.toLowerCase() === rec.university.toLowerCase())
+          ?? unis.find((u) => u.name.toLowerCase().includes(rec.university.toLowerCase()))
+          ?? {
+            id: `ai-${idx}-${rec.university}`,
+            name: rec.university,
+            city: '',
+            country: '',
+            world_ranking: 9999,
+            tuition_min: 0,
+            tuition_max: 0,
+            currency: 'USD',
+            acceptance_rate: 0,
+            logo_url: '',
+          };
 
-    const results = runAlgorithm(unis, bMin, bMax, gpa, preferredCountries);
-    console.log('[AI Recs] matches:', results.length, results.map(m => ({ name: m.university.name, score: m.score })));
+        return {
+          university,
+          score: Math.min(100, Math.max(0, Number(rec.match_score) || 0)),
+          reasons: [rec.reason || 'Recommended based on your profile.'],
+        };
+      });
 
-    setMatches(results);
-    setAnalyzing(false);
-    setGenerated(true);
+      setMatches(results);
+      setGenerated(true);
+    } catch (error) {
+      setErrorMessage('Could not generate recommendations right now. Please try again.');
+      setMatches([]);
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const toggleWishlist = async (uniId: string) => {
@@ -331,27 +329,32 @@ export function AIRecommendations() {
 
         {/* Generate button */}
         {!pageLoading && (
-          <div className="flex justify-center mb-8">
-            <button
-              onClick={handleGenerate}
-              disabled={analyzing || !profile}
-              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 disabled:opacity-60 text-white rounded-xl font-semibold text-lg shadow-lg shadow-indigo-200 dark:shadow-indigo-900/40 transition-all"
-            >
-              {analyzing ? (
-                <>
-                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                  </svg>
-                  Analyzing {unisRef.current.length}+ universities...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  {generated ? 'Regenerate Recommendations' : 'Generate Recommendations'}
-                </>
-              )}
-            </button>
+          <div className="mb-8">
+            <div className="flex justify-center">
+              <button
+                onClick={handleGenerate}
+                disabled={analyzing || !profile}
+                className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 disabled:opacity-60 text-white rounded-xl font-semibold text-lg shadow-lg shadow-indigo-200 dark:shadow-indigo-900/40 transition-all"
+              >
+                {analyzing ? (
+                  <>
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    Analyzing {unisRef.current.length}+ universities...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5" />
+                    {generated ? 'Regenerate Recommendations' : 'Generate Recommendations'}
+                  </>
+                )}
+              </button>
+            </div>
+            {errorMessage && (
+              <p className="text-center text-sm text-red-600 dark:text-red-400 mt-3">{errorMessage}</p>
+            )}
           </div>
         )}
 

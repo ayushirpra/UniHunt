@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseUrl } from "@/lib/supabase";
 import { getAccessToken, setAccessToken } from "@/lib/authToken";
 
 async function getLatestToken() {
@@ -26,4 +26,23 @@ export async function authFetch(input: RequestInfo | URL, init: RequestInit = {}
     ...init,
     headers,
   });
+}
+
+const protectedApiBase = `${supabaseUrl}/functions/v1/server/make-server-363c3823/protected/api`;
+
+export async function postProtectedApi<TResponse>(path: string, body: unknown): Promise<TResponse> {
+  const response = await authFetch(`${protectedApiBase}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data?.error || "Request failed. Please try again.");
+  }
+
+  return response.json() as Promise<TResponse>;
 }

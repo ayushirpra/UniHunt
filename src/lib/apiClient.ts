@@ -41,7 +41,8 @@ export async function postProtectedApi<TResponse>(path: string, body: unknown): 
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new Error(data?.error || "Request failed. Please try again.");
+    const errorMessage = data?.details || data?.error || "Request failed. Please try again.";
+    throw new Error(errorMessage);
   }
 
   return response.json() as Promise<TResponse>;

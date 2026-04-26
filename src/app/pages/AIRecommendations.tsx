@@ -211,8 +211,8 @@ export function AIRecommendations() {
 
       setMatches(results);
       setGenerated(true);
-    } catch (error) {
-      setErrorMessage('Could not generate recommendations right now. Please try again.');
+    } catch (error: any) {
+      setErrorMessage(error?.message || 'Could not generate recommendations right now. Please try again.');
       setMatches([]);
     } finally {
       setAnalyzing(false);

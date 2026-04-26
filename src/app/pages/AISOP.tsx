@@ -77,8 +77,8 @@ export function AISOP() {
       });
 
       setGeneratedSOP(data?.sop || '');
-    } catch (error) {
-      setErrorMessage('Could not generate SOP right now. Please try again.');
+    } catch (error: any) {
+      setErrorMessage(error?.message || 'Could not generate SOP right now. Please try again.');
     } finally {
       setIsGenerating(false);
     }

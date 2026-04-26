@@ -102,8 +102,8 @@ export function ResumeBuilderPage() {
             }))
           : prev.education,
       }));
-    } catch (error) {
-      setAiError('Could not generate resume content right now. Please try again.');
+    } catch (error: any) {
+      setAiError(error?.message || 'Could not generate resume content right now. Please try again.');
     } finally {
       setAiGenerating(false);
     }

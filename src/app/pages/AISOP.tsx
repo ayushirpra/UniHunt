@@ -4,7 +4,6 @@ import {
   Loader2, Check, Trash2, ChevronDown, ChevronUp, Save, Clock,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { postProtectedApi } from '@/lib/apiClient';
 
 interface SOPHistory {
   id: string;
@@ -71,12 +70,44 @@ export function AISOP() {
     setIsGenerating(true);
 
     try {
-      const data = await postProtectedApi<{ sop: string }>('/sop/generate', {
-        ...formData,
-        userName,
-      });
+      // Simulate a slight delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-      setGeneratedSOP(data?.sop || '');
+      const { university, program, background, achievements, careerGoals } = formData;
+      const name = userName || "Applicant";
+      
+      const template = `[Your Name]
+[Your Address]
+[City, State, Zip Code]
+[Your Email Address]
+[Your Phone Number]
+
+[Date]
+
+Admissions Committee
+${program}
+${university}
+[University Address, e.g., City, State, Zip Code]
+
+Dear Members of the Admissions Committee,
+
+I am writing to express my strong interest in the ${program} at ${university}. With a solid foundation in my field and a deep passion for continuous learning, I am eager to contribute to and grow within your esteemed program.
+
+${background ? `My academic and professional background has thoroughly prepared me for this challenge. ${background}` : "Throughout my academic journey, I have developed a rigorous understanding of the core concepts in my discipline, which has fueled my desire to pursue advanced studies."}
+
+${achievements ? `During my previous studies and experiences, I have achieved significant milestones. ${achievements}` : "I have consistently demonstrated a strong work ethic, dedication, and an ability to excel in challenging academic environments."}
+
+Choosing ${university} for my ${program} was a natural decision for me. I am particularly drawn to the innovative research, distinguished faculty, and the collaborative environment that your institution fosters. I am confident that the resources and mentorship available at ${university} will be instrumental in helping me achieve my long-term objectives.
+
+${careerGoals ? `Upon completing the ${program}, my goal is to ${careerGoals}.` : "Looking ahead, I intend to apply the knowledge and skills gained from this program to make a meaningful impact in my chosen profession."}
+
+Thank you for considering my application. I am enthusiastic about the opportunity to bring my unique perspective and dedication to the ${program} at ${university}.
+
+Sincerely,
+
+${name}`;
+
+      setGeneratedSOP(template);
     } catch (error: any) {
       setErrorMessage(error?.message || 'Could not generate SOP right now. Please try again.');
     } finally {

@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { getPlaceholderCampus, getPlaceholderLogo } from '@/lib/imageUtils';
-import { postProtectedApi } from '@/lib/apiClient';
 
 interface University {
   id: string;
@@ -38,13 +37,6 @@ function clampBudget(val: number) {
   return Math.min(Math.max(Number(val) || 0, 0), MAX_BUDGET);
 }
 
-type RecommendationApiResponse = {
-  recommendations: {
-    university: string;
-    reason: string;
-    match_score: number;
-  }[];
-};
 
 function ScoreCircle({ score }: { score: number }) {
   const r = 34;
@@ -185,31 +177,59 @@ export function AIRecommendations() {
     };
 
     try {
-      const data = await postProtectedApi<RecommendationApiResponse>('/recommend', payload);
-      const results: Match[] = (data.recommendations || []).map((rec, idx) => {
-        const university = unis.find((u) => u.name.toLowerCase() === rec.university.toLowerCase())
-          ?? unis.find((u) => u.name.toLowerCase().includes(rec.university.toLowerCase()))
-          ?? {
-            id: `ai-${idx}-${rec.university}`,
-            name: rec.university,
-            city: '',
-            country: '',
-            world_ranking: 9999,
-            tuition_min: 0,
-            tuition_max: 0,
-            currency: 'USD',
-            acceptance_rate: 0,
-            logo_url: '',
-          };
+      // Simulate network request for effect
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const scoredUnis: Match[] = unis.map(u => {
+        let score = 50; // base score
+        const reasons: string[] = [];
+
+        // Check country match
+        if (preferredCountries.length > 0) {
+          if (preferredCountries.includes(u.country)) {
+            score += 25;
+            reasons.push(`Located in your preferred country (${u.country})`);
+          } else {
+            score -= 15;
+          }
+        }
+
+        // Check budget match
+        const hasBudget = bMax > 0;
+        if (hasBudget) {
+          if (u.tuition_min <= bMax && u.tuition_max <= bMax) {
+            score += 25;
+            reasons.push(`Tuition fits well within your budget`);
+          } else if (u.tuition_min <= bMax) {
+            score += 15;
+            reasons.push(`Tuition partially fits within your budget`);
+          } else if (u.tuition_min > 0) {
+            score -= 20;
+          }
+        }
+
+        // Check ranking
+        if (u.world_ranking < 100) {
+          score += 10;
+          reasons.push(`Top 100 Global University`);
+        } else if (u.world_ranking < 500) {
+          score += 5;
+        }
+        
+        // Random element to add variety for identically scored unis
+        score += Math.floor(Math.random() * 5);
 
         return {
-          university,
-          score: Math.min(100, Math.max(0, Number(rec.match_score) || 0)),
-          reasons: [rec.reason || 'Recommended based on your profile.'],
+          university: u,
+          score: Math.min(100, Math.max(0, score)),
+          reasons: reasons.length > 0 ? reasons : ["Matches your basic criteria"],
         };
       });
 
-      setMatches(results);
+      scoredUnis.sort((a, b) => b.score - a.score);
+      const topMatches = scoredUnis.slice(0, 5);
+
+      setMatches(topMatches);
       setGenerated(true);
     } catch (error: any) {
       setErrorMessage(error?.message || 'Could not generate recommendations right now. Please try again.');

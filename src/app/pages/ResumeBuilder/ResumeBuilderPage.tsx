@@ -6,8 +6,6 @@ import { ResumePreview } from './ResumePreview';
 import { saveResume, getResumeById } from '../../../lib/resumeService';
 import { emptyResumeData } from '../../../types/resume';
 import type { ResumeData, ResumeTemplate } from '../../../types/resume';
-import { postProtectedApi } from '../../../lib/apiClient';
-
 const templates: { id: ResumeTemplate; label: string; desc: string }[] = [
   { id: 'modern', label: 'Modern', desc: 'Clean with indigo accents' },
   { id: 'classic', label: 'Classic', desc: 'Traditional serif style' },
@@ -24,8 +22,6 @@ export function ResumeBuilderPage() {
   const [exporting, setExporting] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [aiGenerating, setAiGenerating] = useState(false);
-  const [aiError, setAiError] = useState('');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -53,61 +49,6 @@ export function ResumeBuilderPage() {
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleGenerateWithAI = async () => {
-    setAiError('');
-    setAiGenerating(true);
-    try {
-      const aiData = await postProtectedApi<{
-        summary?: string;
-        experience?: Array<{
-          company?: string;
-          role?: string;
-          duration?: string;
-          description?: string;
-        }>;
-        skills?: string[];
-        education?: Array<{
-          school?: string;
-          degree?: string;
-          field?: string;
-          year?: string;
-        }>;
-      }>('/resume/generate', {
-        title,
-        template,
-        data,
-      });
-
-      setData((prev) => ({
-        ...prev,
-        personal: {
-          ...prev.personal,
-          summary: aiData.summary || prev.personal.summary,
-        },
-        experience: aiData.experience?.length
-          ? aiData.experience.map((item) => ({
-              company: item.company || '',
-              role: item.role || '',
-              duration: item.duration || '',
-              description: item.description || '',
-            }))
-          : prev.experience,
-        skills: aiData.skills?.length ? aiData.skills : prev.skills,
-        education: aiData.education?.length
-          ? aiData.education.map((item) => ({
-              school: item.school || '',
-              degree: item.degree || '',
-              field: item.field || '',
-              year: item.year || '',
-            }))
-          : prev.education,
-      }));
-    } catch (error: any) {
-      setAiError(error?.message || 'Could not generate resume content right now. Please try again.');
-    } finally {
-      setAiGenerating(false);
-    }
-  };
 
   const handleExportPDF = async () => {
     setExporting(true);
@@ -433,16 +374,7 @@ export function ResumeBuilderPage() {
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
-            <button
-              onClick={handleGenerateWithAI}
-              disabled={aiGenerating}
-              className="flex items-center gap-2 px-4 py-2 border border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors text-sm disabled:opacity-60">
-              {aiGenerating ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
-              ) : (
-                <>Generate with AI</>
-              )}
-            </button>
+
             <div className="relative">
               <button
                 onClick={() => setExportMenuOpen(o => !o)}
@@ -492,11 +424,6 @@ export function ResumeBuilderPage() {
       <div className="max-w-7xl mx-auto flex gap-0 h-[calc(100vh-8rem)]">
         {/* Left: Form */}
         <div className="w-full md:w-1/2 overflow-y-auto p-6 border-r border-gray-200 dark:border-gray-700">
-          {aiError && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
-              {aiError}
-            </div>
-          )}
           <div className="flex md:hidden items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 mb-4">
             {templates.map(t => (
               <button

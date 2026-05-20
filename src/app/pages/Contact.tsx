@@ -37,8 +37,8 @@ export function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Email</h3>
-                  <a href="mailto:support@unihunt.ai" className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors block">
-                    support@unihunt.ai
+                  <a href="mailto:ayuhirpara@gmail.com" className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors block">
+                    ayuhirpara@gmail.com
                   </a>
                   <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">24/7 email support</p>
                 </div>

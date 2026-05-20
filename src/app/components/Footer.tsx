@@ -63,8 +63,8 @@ export function Footer() {
             <div className="space-y-3">
               <div className="flex items-start gap-2 text-sm">
                 <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <a href="mailto:support@unihunt.ai" className="hover:text-indigo-500 transition-colors">
-                  support@unihunt.ai
+                <a href="mailto:ayuhirpara@gmail.com" className="hover:text-indigo-500 transition-colors">
+                  ayuhirpara@gmail.com
                 </a>
               </div>
               <div className="flex items-start gap-2 text-sm">

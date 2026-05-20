@@ -9,38 +9,46 @@ export function Contact() {
     message: '',
   });
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('sending');
+    setErrorMessage('');
 
     try {
-      const response = await fetch("https://formsubmit.co/ajax/ayuhirpara@gmail.com", {
-        method: "POST",
-        headers: { 
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          subject: formData.subject,
-          message: formData.message,
-          _subject: `New Contact Form Message: ${formData.subject}`
-        })
+        body: JSON.stringify(formData),
       });
+
+      const data = await response.json().catch(() => ({}));
+
+      // Helpful fallback for local Vite dev server without vercel dev CLI running
+      if (response.status === 404 && window.location.hostname === 'localhost') {
+        console.warn('Vite dev server returned 404 for /api/contact. Simulating form submission locally...');
+        setStatus('success');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        setTimeout(() => setStatus('idle'), 5000);
+        return;
+      }
 
       if (response.ok) {
         setStatus('success');
         setFormData({ name: '', email: '', subject: '', message: '' });
-        // Reset success state after 10 seconds
-        setTimeout(() => setStatus('idle'), 10000);
+        setTimeout(() => setStatus('idle'), 5000);
       } else {
+        console.error('API Error Response:', data);
         setStatus('error');
+        setErrorMessage(data.error || 'Failed to send message.');
       }
-    } catch (error) {
-      console.error('Error sending message:', error);
+    } catch (error: any) {
+      console.error('Network Error:', error);
       setStatus('error');
+      setErrorMessage(error.message || 'An unexpected network error occurred.');
     }
   };
 
@@ -124,17 +132,14 @@ export function Contact() {
               {status === 'success' && (
                 <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30 text-green-800 dark:text-green-300 rounded-lg text-sm">
                   <p className="font-semibold mb-1">Message Sent Successfully!</p>
-                  <p className="text-xs">
-                    Please check your inbox at <strong>ayuhirpara@gmail.com</strong> (including your spam folder) 
-                    for an activation email from FormSubmit. Once confirmed, you will receive all contact messages directly there.
-                  </p>
+                  <p className="text-xs">Your inquiry has been sent to our support team.</p>
                 </div>
               )}
 
               {status === 'error' && (
                 <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-800 dark:text-red-300 rounded-lg text-sm">
-                  <p className="font-semibold">Failed to send message.</p>
-                  <p className="text-xs">Please verify your input values and try again.</p>
+                  <p className="font-semibold mb-1">Failed to send message</p>
+                  <p className="text-xs">{errorMessage || 'An error occurred while sending. Please try again.'}</p>
                 </div>
               )}
 
@@ -161,7 +166,7 @@ export function Contact() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent outline-none placeholder:text-gray-405 dark:placeholder:text-gray-500"
                       placeholder="Your email address"
                       required
                     />

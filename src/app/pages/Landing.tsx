@@ -10,8 +10,10 @@ import {
   Clock,
   Shield,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export function Landing() {
+  const { session } = useAuth();
   const features = [
     {
       icon: Search,
@@ -97,10 +99,10 @@ export function Landing() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
-                  to="/signup"
+                  to={session ? "/dashboard" : "/signup"}
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-lg font-medium"
                 >
-                  Get Started Free
+                  {session ? "Go to Dashboard" : "Get Started Free"}
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <Link
@@ -212,10 +214,10 @@ export function Landing() {
 
           <div className="text-center">
             <Link
-              to="/signup"
+              to={session ? "/dashboard" : "/signup"}
               className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 rounded-xl hover:bg-gray-50 transition-colors text-lg font-medium"
             >
-              Start Your Journey Today
+              {session ? "Go to Dashboard" : "Start Your Journey Today"}
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
@@ -256,10 +258,10 @@ export function Landing() {
             Join UniHunt AI today and take the first step toward your future.
           </p>
           <Link
-            to="/signup"
+            to={session ? "/dashboard" : "/signup"}
             className="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-lg font-medium"
           >
-            Get Started Free
+            {session ? "Go to Dashboard" : "Get Started Free"}
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>

@@ -37,7 +37,9 @@ export function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Email</h3>
-                  <p className="text-gray-600 dark:text-gray-400">support@unihunt.ai</p>
+                  <a href="mailto:support@unihunt.ai" className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors block">
+                    support@unihunt.ai
+                  </a>
                   <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">24/7 email support</p>
                 </div>
               </div>
@@ -50,7 +52,9 @@ export function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Phone</h3>
-                  <p className="text-gray-600 dark:text-gray-400">+1 (555) 123-4567</p>
+                  <a href="tel:+15551234567" className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors block">
+                    +1 (555) 123-4567
+                  </a>
                   <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">Mon-Fri, 9AM-6PM EST</p>
                 </div>
               </div>

@@ -72,6 +72,7 @@ export function AIRecommendations() {
   const [analyzing, setAnalyzing] = useState(false);
   const [generated, setGenerated] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [loadError, setLoadError] = useState('');
   const [allCountries, setAllCountries] = useState<string[]>([]);
 
   // Filters — use refs so handleGenerate always reads latest values
@@ -94,37 +95,57 @@ export function AIRecommendations() {
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      userRef.current = user;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        userRef.current = user;
 
-      const [profileRes, unisRes, wlRes] = await Promise.all([
-        user ? supabase.from('profiles').select('*').eq('id', user.id).single() : Promise.resolve({ data: null }),
-        supabase.from('universities').select('*'),
-        user ? supabase.from('wishlist').select('university_id').eq('user_id', user.id) : Promise.resolve({ data: [] }),
-      ]);
+        if (!user) {
+          setLoadError('Please log in to use AI Recommendations.');
+          setPageLoading(false);
+          return;
+        }
 
-      if (profileRes.data) {
-        setProfile(profileRes.data);
-        const pMin = clampBudget(profileRes.data.budget_min);
-        const pMax = clampBudget(profileRes.data.budget_max) || 50000;
-        setSliderBudgetMin(pMin);
-        setSliderBudgetMax(pMax);
-        sliderBudgetMinRef.current = pMin;
-        sliderBudgetMaxRef.current = pMax;
+        const [profileRes, unisRes, wlRes] = await Promise.all([
+          supabase.from('profiles').select('*').eq('id', user.id).single(),
+          supabase.from('universities').select('*'),
+          supabase.from('wishlist').select('university_id').eq('user_id', user.id),
+        ]);
+
+        if (profileRes.data) {
+          setProfile(profileRes.data);
+          const pMin = clampBudget(profileRes.data.budget_min);
+          const pMax = clampBudget(profileRes.data.budget_max) || 50000;
+          setSliderBudgetMin(pMin);
+          setSliderBudgetMax(pMax);
+          sliderBudgetMinRef.current = pMin;
+          sliderBudgetMaxRef.current = pMax;
+        } else {
+          // Profile not found — create a minimal fallback so generation can proceed
+          const fallbackProfile: Profile = { gpa: 0, budget_min: 0, budget_max: 50000, preferred_countries: [], academic_level: '' };
+          setProfile(fallbackProfile);
+        }
+
+        if (unisRes.error) {
+          console.error('Failed to load universities:', unisRes.error);
+          setLoadError('Failed to load university data. Please check your connection and try refreshing.');
+        } else if (unisRes.data && unisRes.data.length > 0) {
+          const normalised: University[] = unisRes.data.map((u: any) => ({
+            ...u,
+            world_ranking: Number(u.world_ranking ?? u.ranking) || 9999,
+            tuition_min: Number(u.tuition_min) || 0,
+            tuition_max: Number(u.tuition_max) || 0,
+          }));
+          unisRef.current = normalised;
+          setAllCountries([...new Set(normalised.map((u) => u.country).filter(Boolean))].sort() as string[]);
+        } else {
+          setLoadError('No universities found in the database.');
+        }
+
+        if (wlRes.data) setWishlist((wlRes.data as any[]).map((w) => w.university_id));
+      } catch (err: any) {
+        console.error('Error loading data:', err);
+        setLoadError(err?.message || 'Failed to load data. Please try refreshing the page.');
       }
-
-      if (unisRes.data && unisRes.data.length > 0) {
-        const normalised: University[] = unisRes.data.map((u: any) => ({
-          ...u,
-          world_ranking: Number(u.world_ranking ?? u.ranking) || 9999,
-          tuition_min: Number(u.tuition_min) || 0,
-          tuition_max: Number(u.tuition_max) || 0,
-        }));
-        unisRef.current = normalised;
-        setAllCountries([...new Set(normalised.map((u) => u.country).filter(Boolean))].sort() as string[]);
-      }
-
-      if (wlRes.data) setWishlist((wlRes.data as any[]).map((w) => w.university_id));
       setPageLoading(false);
     })();
   }, []);
@@ -138,7 +159,14 @@ export function AIRecommendations() {
     : [];
 
   const handleGenerate = async () => {
-    if (!profile) return;
+    if (!profile) {
+      setErrorMessage('Profile not loaded. Please refresh the page or complete your profile.');
+      return;
+    }
+    if (unisRef.current.length === 0) {
+      setErrorMessage('No universities loaded. Please refresh the page and try again.');
+      return;
+    }
     setAnalyzing(true);
     setGenerated(false);
     setErrorMessage('');
@@ -272,8 +300,26 @@ export function AIRecommendations() {
           </p>
         </div>
 
+        {/* Load error banner */}
+        {!pageLoading && loadError && (
+          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl p-5 flex items-start gap-4">
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-semibold text-red-800 dark:text-red-300 mb-1">
+                {loadError}
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-red-700 dark:text-red-300 hover:underline mt-2"
+              >
+                <RefreshCw className="w-4 h-4" /> Refresh Page
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Profile incomplete banner */}
-        {!pageLoading && profile && missingFields.length > 0 && (
+        {!pageLoading && !loadError && profile && missingFields.length > 0 && (
           <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-5 flex items-start gap-4">
             <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
             <div className="flex-1">
@@ -353,7 +399,7 @@ export function AIRecommendations() {
             <div className="flex justify-center">
               <button
                 onClick={handleGenerate}
-                disabled={analyzing || !profile}
+                disabled={analyzing || !profile || unisRef.current.length === 0}
                 className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 disabled:opacity-60 text-white rounded-xl font-semibold text-lg shadow-lg shadow-indigo-200 dark:shadow-indigo-900/40 transition-all"
               >
                 {analyzing ? (

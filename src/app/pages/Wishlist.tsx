@@ -20,7 +20,7 @@ export function Wishlist() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setError('Please log in to view your wishlist');
@@ -32,15 +32,15 @@ export function Wishlist() {
         .from('wishlist')
         .select('*, universities(*)')
         .eq('user_id', user.id);
-      
+
       if (error) throw error;
-      
+
       const formattedData = data?.map((item: any) => {
         const uni = item.universities;
-        const tuitionDisplay = uni.tuition_min && uni.tuition_max 
+        const tuitionDisplay = uni.tuition_min && uni.tuition_max
           ? `$${uni.tuition_min.toLocaleString()} - $${uni.tuition_max.toLocaleString()}/year`
           : uni.tuition_range || 'Contact for info';
-        
+
         return {
           wishlistId: item.id,
           id: uni.id,
@@ -56,7 +56,7 @@ export function Wishlist() {
           addedDate: item.created_at,
         };
       }) || [];
-      
+
       setSavedUniversities(formattedData);
     } catch (err: any) {
       setError(err.message || 'Failed to load wishlist');
@@ -74,9 +74,9 @@ export function Wishlist() {
         .from('wishlist')
         .delete()
         .eq('id', university.wishlistId);
-      
+
       if (error) throw error;
-      
+
       setSavedUniversities((prev) => prev.filter((uni) => uni.id !== id));
     } catch (err: any) {
       alert('Failed to remove from wishlist: ' + err.message);
@@ -104,21 +104,19 @@ export function Wishlist() {
             <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded ${
-                  viewMode === 'grid'
-                    ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
+                className={`p-2 rounded ${viewMode === 'grid'
+                  ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
               >
                 <Grid className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded ${
-                  viewMode === 'list'
-                    ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
+                className={`p-2 rounded ${viewMode === 'list'
+                  ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
               >
                 <List className="w-5 h-5" />
               </button>
@@ -240,13 +238,13 @@ export function Wishlist() {
                           <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-gray-900/10 pointer-events-none group-hover:opacity-80 transition-opacity" />
                           {/* Floating Logo Badge */}
                           <div className="absolute bottom-2 left-2 w-10 h-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-lg p-1 shadow-sm border border-white/20 transition-transform duration-300 group-hover:-translate-y-1">
-                             <img
+                            <img
                               src={university.logo_url || getPlaceholderLogo(university.name)}
                               alt={`${university.name} logo`}
                               loading="lazy"
                               className="w-full h-full object-contain rounded"
                               onError={(e) => { e.currentTarget.src = getPlaceholderLogo(university.name); }}
-                             />
+                            />
                           </div>
                         </Link>
                       </div>

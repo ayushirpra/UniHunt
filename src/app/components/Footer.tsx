@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
-import { GraduationCap, Mail, MapPin, Phone } from 'lucide-react';
+import { GraduationCap, Mail } from 'lucide-react';
 
 export function Footer() {
   return (
     <footer className="glass-panel border-t border-indigo-100 dark:border-indigo-900/30 text-gray-700 dark:text-gray-300 transition-colors duration-300 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -14,48 +14,20 @@ export function Footer() {
               </div>
               <span className="text-xl font-semibold text-gray-900 dark:text-white">UniHunt AI</span>
             </div>
-            <p className="text-sm">
-              Your AI-powered companion for discovering and applying to universities worldwide.
-            </p>
+            <p className="text-sm">Your AI-powered companion for discovering and applying to universities worldwide.</p>
           </div>
 
           {/* Quick Links */}
           <div>
             <h3 className="text-gray-900 dark:text-white font-medium mb-4">Quick Links</h3>
             <div className="space-y-2">
-              <Link to="/about" className="block text-sm hover:text-indigo-500 transition-colors">
-                About Us
-              </Link>
-              <Link to="/how-it-works" className="block text-sm hover:text-indigo-500 transition-colors">
-                How It Works
-              </Link>
-              <Link to="/pricing" className="block text-sm hover:text-indigo-500 transition-colors">
-                Pricing
-              </Link>
-              <Link to="/contact" className="block text-sm hover:text-indigo-500 transition-colors">
-                Contact
-              </Link>
+              <Link to="/about" className="block text-sm hover:text-indigo-500 transition-colors">About Us</Link>
+              <Link to="/how-it-works" className="block text-sm hover:text-indigo-500 transition-colors">How It Works</Link>
             </div>
           </div>
 
-          {/* Resources */}
-          <div>
-            <h3 className="text-gray-900 dark:text-white font-medium mb-4">Resources</h3>
-            <div className="space-y-2">
-              <a href="#" className="block text-sm hover:text-indigo-500 transition-colors">
-                Blog
-              </a>
-              <a href="#" className="block text-sm hover:text-indigo-500 transition-colors">
-                Help Center
-              </a>
-              <a href="#" className="block text-sm hover:text-indigo-500 transition-colors">
-                Privacy Policy
-              </a>
-              <a href="#" className="block text-sm hover:text-indigo-500 transition-colors">
-                Terms of Service
-              </a>
-            </div>
-          </div>
+          {/* Resources - removed */}
+          <div></div>
 
           {/* Contact */}
           <div>
@@ -63,19 +35,7 @@ export function Footer() {
             <div className="space-y-3">
               <div className="flex items-start gap-2 text-sm">
                 <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <a href="mailto:ayuhirpara@gmail.com" className="hover:text-indigo-500 transition-colors">
-                  ayuhirpara@gmail.com
-                </a>
-              </div>
-              <div className="flex items-start gap-2 text-sm">
-                <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <a href="tel:+15551234567" className="hover:text-indigo-500 transition-colors">
-                  +1 (555) 123-4567
-                </a>
-              </div>
-              <div className="flex items-start gap-2 text-sm">
-                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>123 Education St, Boston, MA</span>
+                <a href="mailto:ayuhirpara@gmail.com" className="hover:text-indigo-500 transition-colors">ayuhirpara@gmail.com</a>
               </div>
             </div>
           </div>

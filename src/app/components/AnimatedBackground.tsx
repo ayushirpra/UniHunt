@@ -17,7 +17,7 @@ export function AnimatedBackground() {
       <div className="absolute bottom-[-20%] left-[15%] w-[60%] h-[45%] rounded-full bg-violet-400/25 dark:bg-purple-600/30 blur-[150px] mix-blend-multiply dark:mix-blend-screen animate-float-fast" />
       
       {/* Subtle overlay grid or noise could be added here if desired */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay pointer-events-none"></div>
+      <div className="absolute inset-0 bg-[url('./noise.svg')] opacity-[0.03] mix-blend-overlay pointer-events-none"></div>
     </div>
   );
 }

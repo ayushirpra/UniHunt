@@ -6,16 +6,21 @@ let db: Db | null = null;
 export async function getDb(): Promise<Db> {
   if (db) return db;
 
+  // Diagnostic logging — visible in Vercel function logs
+  console.log('[mongo] MONGODB_URI exists:', !!process.env.MONGODB_URI);
+  console.log('[mongo] MONGODB_DB_NAME exists:', !!process.env.MONGODB_DB_NAME);
+  console.log('[mongo] NODE_ENV:', process.env.NODE_ENV);
+
   // Strip CRLF and surrounding quotes from env values (handles Windows .env files)
   const clean = (v: string | undefined) => v?.replace(/\r/g, '').replace(/^['"]|['"]$/g, '').trim();
 
   const uri = clean(process.env.MONGODB_URI);
-  const dbName = clean(process.env.MONGODB_DB_NAME);
+  const dbName = clean(process.env.MONGODB_DB_NAME) || 'unihunt';
 
-  if (!uri || !dbName) {
+  if (!uri) {
     throw new Error(
-      'Missing MONGODB_URI or MONGODB_DB_NAME. ' +
-      'Set them in Vercel project settings (Production) or in .env (local vercel dev).'
+      'MONGODB_URI is not set. In Vercel dashboard: Settings → Environment Variables → ' +
+      'ensure MONGODB_URI is checked for Production, Preview, AND Development environments.'
     );
   }
 

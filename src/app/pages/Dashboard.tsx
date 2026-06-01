@@ -41,6 +41,7 @@ export function Dashboard() {
         .eq('id', user.id)
         .single();
       if (profile?.full_name) setUserName(profile.full_name);
+      else setUserName(user.email?.split('@')[0] || 'Student');
 
       // Fetch stats
       const [wishlistRes, appsRes, deadlinesRes, acceptedRes] = await Promise.all([

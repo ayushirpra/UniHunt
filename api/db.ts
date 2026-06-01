@@ -55,6 +55,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         if (single) {
+          // Auto-create a blank profile if none exists for this user
+          if (result.length === 0 && table === 'profiles' && mongoQuery.id) {
+            const blank = {
+              id: mongoQuery.id,
+              full_name: '',
+              academic_level: '',
+              preferred_countries: [],
+              budget_min: 0,
+              budget_max: 0,
+              gpa: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+            await collection.insertOne(blank);
+            return res.status(200).json({ data: blank, error: null });
+          }
           return res.status(200).json({
             data: result[0] || null,
             error: result.length === 0 ? { message: 'No rows found' } : null,

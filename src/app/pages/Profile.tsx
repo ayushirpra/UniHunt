@@ -137,7 +137,9 @@ export function Profile() {
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      // 'No rows found' just means first login — the API auto-creates a blank profile,
+      // so we treat it as an empty profile rather than a hard error
+      if (error && error.message !== 'No rows found') throw error;
 
       // preferred_countries is TEXT[] in Postgres — join array → string for UI
       const countries = Array.isArray(data.preferred_countries)
@@ -169,25 +171,43 @@ export function Profile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Convert comma-separated string → array for Postgres TEXT[] column
       const countriesArray = profile.preferredCountries
         ? profile.preferredCountries.split(',').map((c) => c.trim()).filter(Boolean)
         : [];
 
-      const { error } = await supabase
+      // Check if profile exists first, then insert or update accordingly
+      const { data: existing } = await supabase
         .from('profiles')
-        .update({
-          full_name: profile.fullName,
-          academic_level: profile.academicLevel,
-          preferred_countries: countriesArray,
-          budget_min: profile.budgetMin,
-          budget_max: profile.budgetMax,
-          gpa: profile.gpa,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
+        .select('id')
+        .eq('id', user.id)
+        .single();
 
-      if (error) throw error;
+      const profilePayload = {
+        id: user.id,
+        full_name: profile.fullName,
+        academic_level: profile.academicLevel,
+        preferred_countries: countriesArray,
+        budget_min: profile.budgetMin,
+        budget_max: profile.budgetMax,
+        gpa: profile.gpa,
+        updated_at: new Date().toISOString(),
+      };
+
+      let saveError;
+      if (existing) {
+        const { error } = await supabase
+          .from('profiles')
+          .update(profilePayload)
+          .eq('id', user.id);
+        saveError = error;
+      } else {
+        const { error } = await supabase
+          .from('profiles')
+          .insert({ ...profilePayload, created_at: new Date().toISOString() });
+        saveError = error;
+      }
+
+      if (saveError) throw saveError;
 
       setSuccessMessage('Profile updated successfully!');
       setIsEditing(false);

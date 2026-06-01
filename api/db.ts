@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { getDb } from './lib/mongo.js';
+import { getDb } from './lib/mongo';
 
 const JOIN_MAP: Record<string, { foreignKey: string; joinTable: string }> = {
   wishlist: { foreignKey: 'university_id', joinTable: 'universities' },

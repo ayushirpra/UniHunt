@@ -3,25 +3,49 @@ import { MongoClient, Db } from 'mongodb';
 let client: MongoClient | null = null;
 let db: Db | null = null;
 
-/**
- * Initialize and return a MongoDB client. The connection URI is read from the
- * `MONGODB_URI` environment variable. The database name is taken from
- * `MONGODB_DB_NAME`.
- */
 export async function getDb(): Promise<Db> {
   if (db) return db;
-  const uri = process.env.MONGODB_URI;
-  const dbName = process.env.MONGODB_DB_NAME;
+
+  // Strip CRLF and surrounding quotes from env values (handles Windows .env files)
+  const clean = (v: string | undefined) => v?.replace(/\r/g, '').replace(/^['"]|['"]$/g, '').trim();
+
+  const uri = clean(process.env.MONGODB_URI);
+  const dbName = clean(process.env.MONGODB_DB_NAME);
+
   if (!uri || !dbName) {
-    throw new Error('Missing MONGODB_URI or MONGODB_DB_NAME environment variables');
+    throw new Error(
+      'Missing MONGODB_URI or MONGODB_DB_NAME. ' +
+      'Set them in Vercel project settings (Production) or in .env (local vercel dev).'
+    );
   }
-  client = new MongoClient(uri);
-  await client.connect();
+
+  if (uri.includes('localhost') || uri.includes('127.0.0.1')) {
+    throw new Error(
+      'MONGODB_URI points to localhost which is unreachable on Vercel. ' +
+      'Use a MongoDB Atlas connection string: mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/<db>'
+    );
+  }
+
+  // Reset both so a failed connect() doesn't leave a dangling client
+  client = null;
+  db = null;
+
+  const newClient = new MongoClient(uri, {
+    serverSelectionTimeoutMS: 8000,
+    connectTimeoutMS: 10000,
+    tls: uri.startsWith('mongodb+srv') ? undefined : true,
+  });
+  try {
+    await newClient.connect();
+  } catch (err: any) {
+    throw new Error(`MongoDB connection failed: ${err.message}`);
+  }
+
+  client = newClient;
   db = client.db(dbName);
   return db;
 }
 
-/** Close the MongoDB connection (useful for scripts & tests). */
 export async function closeDb(): Promise<void> {
   if (client) {
     await client.close();

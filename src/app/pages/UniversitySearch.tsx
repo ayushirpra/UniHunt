@@ -21,6 +21,13 @@ export function UniversitySearch() {
 
   useEffect(() => {
     fetchUniversities();
+    // Load saved wishlist IDs
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from('wishlist').select('university_id').eq('user_id', user.id);
+      if (data) setSavedUniversities((data as any[]).map((w) => w.university_id));
+    })();
   }, []);
 
   const fetchUniversities = async () => {
@@ -141,6 +148,7 @@ export function UniversitySearch() {
       const { error } = await supabase.from('applications').insert({
         user_id: user.id,
         university_id: universityId,
+        university_name: universityName,
         status: 'Interested',
       });
 
@@ -187,8 +195,19 @@ export function UniversitySearch() {
     }
   };
 
-  const toggleSave = (id: string) => {
-    addToWishlist(id);
+  const toggleSave = async (id: string) => {
+    if (savedUniversities.includes(id)) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        await supabase.from('wishlist').delete().eq('user_id', user.id).eq('university_id', id);
+        setSavedUniversities((prev) => prev.filter((uid) => uid !== id));
+      } catch (err) {
+        console.error('Error removing from wishlist:', err);
+      }
+    } else {
+      addToWishlist(id);
+    }
   };
 
   const clearFilters = () => {

@@ -20,7 +20,7 @@ import { Landing } from "./pages/Landing";
 import { About } from "./pages/About";
 import { HowItWorks } from "./pages/HowItWorks";
 import { Contact } from "./pages/Contact";
-import { Pricing } from "./pages/Pricing";
+
 
 // Auth Pages
 import { Login } from "./pages/Login";
@@ -84,7 +84,6 @@ function AppRoutes() {
                 path="/how-it-works"
                 element={<HowItWorks />}
               />
-              <Route path="/pricing" element={<Pricing />} />
               <Route path="/contact" element={<Contact />} />
 
               {/* Auth Routes */}

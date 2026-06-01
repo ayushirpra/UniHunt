@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { GraduationCap, Menu, X, User, LogOut, Brain, FileText, MessageSquare, Sparkles, ChevronDown } from 'lucide-react';
+import { GraduationCap, Menu, X, User, LogOut, Brain, FileText, Sparkles, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '../context/AuthContext';
@@ -19,7 +19,6 @@ export function Navbar() {
     { path: '/', label: 'Home' },
     { path: '/about', label: 'About' },
     { path: '/how-it-works', label: 'How It Works' },
-    { path: '/pricing', label: 'Pricing' },
     { path: '/contact', label: 'Contact' },
   ];
 
@@ -35,7 +34,6 @@ export function Navbar() {
     { path: '/ai-recommendations', label: 'University Matcher', icon: Brain, available: true },
     { path: '/ai-sop', label: 'SOP Generator', icon: FileText, available: true },
     { path: '/my-resumes', label: 'Resume Builder', icon: User, available: true },
-    { path: '/ai-interview', label: 'Interview Prep', icon: MessageSquare, available: false },
   ];
 
   const links = isAuthenticated ? appLinks : publicLinks;

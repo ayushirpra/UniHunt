@@ -22,6 +22,9 @@ export function Login() {
     if (lower.includes("invalid login credentials") || lower.includes("invalid password") || lower.includes("wrong password")) {
       return "Wrong password. Please try again.";
     }
+    if (lower.includes("rate limit") || lower.includes("rate_limit")) {
+      return "Supabase email rate limit exceeded. You can click the 'Bypass with Demo Login' button to explore the app.";
+    }
 
     return message;
   };
@@ -83,6 +86,21 @@ export function Login() {
     }
   };
 
+  const handleDemoLogin = () => {
+    const mockSession = {
+      access_token: "mock-token",
+      user: {
+        id: "mock-user-id",
+        email: "demo@unihunt.ai",
+        user_metadata: {
+          full_name: "Demo Student",
+        },
+      },
+    };
+    localStorage.setItem("unihunt_mock_session", JSON.stringify(mockSession));
+    window.location.href = "/dashboard";
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center px-4 py-12 transition-colors duration-300">
       <div className="w-full max-w-md">
@@ -106,6 +124,15 @@ export function Login() {
           {error && (
             <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              {error.toLowerCase().includes("rate limit") && (
+                <button
+                  type="button"
+                  onClick={handleDemoLogin}
+                  className="mt-3 w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  Bypass with Demo Login
+                </button>
+              )}
             </div>
           )}
 
@@ -177,9 +204,18 @@ export function Login() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed mb-3"
           >
             {loading ? "Redirecting..." : "Continue with Google"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDemoLogin}
+            disabled={loading}
+            className="w-full py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors font-medium"
+          >
+            Demo Login (Bypass Supabase)
           </button>
         </div>
       </div>

@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Sparkles, Brain, FileText, User, MessageSquare, Zap, TrendingUp } from 'lucide-react';
+import { Sparkles, Brain, FileText, User, Zap, TrendingUp } from 'lucide-react';
 
 export function AITools() {
   const stats = [
-    { label: 'AI Tools Available', value: '4', icon: Zap },
+    { label: 'AI Tools Available', value: '3', icon: Zap },
     { label: 'SOPs Generated', value: '1,234', icon: FileText },
     { label: 'Recommendations Made', value: '5,678', icon: TrendingUp },
   ];
@@ -39,16 +39,7 @@ export function AITools() {
       features: ['ATS-friendly formats', 'Smart suggestions', 'Export to PDF'],
       available: true,
     },
-    {
-      id: 'interview-prep',
-      title: 'AI Interview Prep',
-      description: 'Practice interviews with AI-powered mock sessions and get instant feedback on your responses.',
-      icon: MessageSquare,
-      gradient: 'from-orange-600 to-red-600',
-      link: '/ai-interview',
-      features: ['Mock interviews', 'Real-time feedback', 'Common questions'],
-      available: false,
-    },
+
   ];
 
   return (

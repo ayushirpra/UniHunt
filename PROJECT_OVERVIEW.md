@@ -10,7 +10,6 @@ UniHunt AI is a modern, comprehensive EdTech web application designed to help st
 - **Landing Page** - Hero section, features, how it works, statistics, and call-to-actions
 - **About Us** - Mission, story, values, and team information
 - **How It Works** - Step-by-step guide with visual illustrations
-- **Pricing** - Three-tier pricing plans (Free, Pro, Premium) with feature comparisons
 - **Contact** - Contact form with office information and business hours
 
 ### Authentication & Onboarding
@@ -73,7 +72,6 @@ src/app/
     ├── Landing.tsx                 # Homepage
     ├── About.tsx                   # About page
     ├── HowItWorks.tsx              # How it works guide
-    ├── Pricing.tsx                 # Pricing plans
     ├── Contact.tsx                 # Contact form
     ├── Login.tsx                   # Login page
     ├── Signup.tsx                  # Registration page
@@ -104,8 +102,8 @@ src/app/
 
 ## 🔑 Key Features by Page Count
 
-- **Total Pages**: 20
-- **Public Pages**: 5
+- **Total Pages**: 19
+- **Public Pages**: 4
 - **Auth Pages**: 4
 - **Protected App Pages**: 7
 - **AI Tools**: 3
@@ -173,7 +171,6 @@ Public Routes:
 / - Landing
 /about - About Us
 /how-it-works - How It Works
-/pricing - Pricing Plans
 /contact - Contact Form
 
 Auth Routes:
@@ -204,10 +201,9 @@ Protected Routes:
 4. **University Management** - Admin CRUD for universities
 5. **User Management** - Admin user controls
 6. **Advanced Analytics** - Detailed platform metrics
-7. **Interview Prep** - AI-powered interview assistance
-8. **Visa Guidance** - Post-acceptance support
-9. **Community Features** - Student forums and discussions
-10. **Mobile App** - Native iOS/Android applications
+7. **Visa Guidance** - Post-acceptance support
+8. **Community Features** - Student forums and discussions
+9. **Mobile App** - Native iOS/Android applications
 
 ## 💡 Design Principles
 
